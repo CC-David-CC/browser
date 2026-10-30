@@ -11,8 +11,9 @@ The engine manifest records this additional file's SHA-256 as
 
 The following source archives were prepared on r730, their Zstandard streams
 were verified, and copies were hash-checked on box-webhost in
-`/srv/codi-browser/source-staging/engine-6736dce5/`. They are staging
-artifacts, not Git inputs or public downloads:
+`/srv/codi-browser/source-staging/engine-6736dce5/`. The allowlisted archives
+and notices are served at `https://ksu.codes/browser-sources/`; these large
+generated artifacts are not Git inputs:
 
 | File | SHA-256 |
 | --- | --- |
@@ -27,18 +28,25 @@ The Emscripten archive contains the patched build checkout, excluding caches,
 `node_modules` and Python bytecode. The Wisp archive contains the exact
 installed package's source, package metadata, README and AGPL-3.0 license.
 An additional archive of the Codi Browser app and its related integration
-sources was made from Git commit `6749ae260` with SHA-256
-`31a3ae63fa1a55c5dff0704d836864c55cbb7c69554cf6b24998198803624727`.
+sources was made from Git commit `59dfaf024` with SHA-256
+`00e499a9c5e8c812666616023f4d02e98f49696b7fc7d85040123a93ebe0ea34`.
+The running relay's source snapshot is commit `05e70e3b0` with SHA-256
+`6031d72c1c102de2260a634e9e1b8b559f8cccf292b6512e9270e348f2df5ef9`.
 The engine's built output and generated archives do not belong in Git.
 
-Before distributing the engine, make the corresponding source and license
-notices available to recipients, including the local modifications, and tell
-recipients where to find them. Mozilla's
+The notice page provides the generated Gecko license inventory, Emscripten
+runtime notices, Wisp AGPL and adapter MIT text, and links to the pinned
+archives. `tools/prepare_notices.py` reconstructs that page from the exact
+build inputs. Mozilla's
 [MPL 2.0 distribution terms](https://www.mozilla.org/en-US/MPL/2.0/) and
 [FAQ](https://www.mozilla.org/en-US/MPL/2.0/FAQ/) describe its source and
 notice requirements. Wisp's AGPL-3.0 terms are separate; review the complete
 bundle and corresponding source obligations. Firefox and the build toolchain
 include many third-party components and licenses, so these snapshots alone do
 not establish that all notices or source provisions are complete. Confirm the
-engine's actual component/license inventory and make the matching source
-available through a tested, user-visible path before public deployment.
+actual linked component inventory, including any LGPL obligations, before
+public engine deployment. The observed engine link reported 37 unresolved
+symbols, including file-picker and audio functions; this is a separate
+functionality limitation that requires investigation before promising ordinary
+website compatibility. Update the source archive whenever the shipped Browser
+source or engine build changes.

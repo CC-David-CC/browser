@@ -14,3 +14,8 @@ The native extension is original MIT adapter code compiled alongside the upstrea
 This handoff is not a legal determination of distribution compliance. Do not treat the adapter's MIT license as permission to relicense all Gecko or omit its source/notice obligations. Do not imply Mozilla endorsement or use Firefox branding without reviewing the relevant trademark terms.
 
 The build may stage resources from the upstream GRE. Review resource licenses before shipping; this ZIP does not supply font files. Source URLs and exact inspected paths are in `docs/SOURCES.md`.
+
+For the current pinned build, the Gecko-generated component notices,
+Emscripten/runtime notices, Wisp license, adapter license, and matching source
+snapshots are available at `https://ksu.codes/browser-sources/`. See
+`SOURCE_PROVISION.md` for hashes and the remaining linked-component review.
