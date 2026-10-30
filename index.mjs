@@ -18,7 +18,7 @@ export function mount(host) {
   const toolbar=make('div','toolbar'),form=make('form'),address=make('input');
   address.type='text';address.inputMode='url';address.autocomplete='off';address.placeholder='https://example.com';address.setAttribute('aria-label','Website address');
   const buttons={};
-  for(const [name,label] of [['back','Back'],['forward','Forward'],['reload','Reload'],['stop','Stop'],['home','Home'],['open','Open HTML'],['reset','Reset engine']]) {
+  for(const [name,label] of [['back','Back'],['forward','Forward'],['reload','Reload'],['stop','Stop'],['home','Home'],['open','Upload HTML'],...(host.storage?[['files','Open from My files']]:[]),['reset','Reset engine']]) {
     const b=make('button','',label);b.type='button';b.disabled=name!=='reset';buttons[name]=b;toolbar.append(b);
   }
   const go=make('button','','Go');go.type='submit';go.disabled=true;
@@ -105,6 +105,18 @@ export function mount(host) {
   buttons.home.addEventListener('click',()=>void operation('open-html',{html:HOME_HTML}),{signal:lifetime.signal});
   buttons.reset.addEventListener('click',()=>void start(),{signal:lifetime.signal});
   buttons.open.addEventListener('click',()=>picker.click(),{signal:lifetime.signal});
+  buttons.files?.addEventListener('click',async()=>{
+    const s=instance,g=generation;
+    try{
+      const path=await host.storage.pickFile({extensions:['.html','.htm'],signal:host.signal});
+      if(!path||!current(s,g))return;
+      const context=await host.storage.mirrorFileContext();if(!current(s,g)||!context.valid())return;
+      const file=await context.files.read(path);if(!current(s,g)||!context.valid())return;
+      if(file.data.byteLength>config.maxHTMLBytes)throw new Error('HTML file too large.');
+      const html=new TextDecoder('utf-8',{fatal:true}).decode(file.data);
+      await operation('open-html',{html});
+    }catch(e){if(current(s,g))report(e);}
+  },{signal:lifetime.signal});
   picker.addEventListener('change',async()=>{
     const f=picker.files?.[0];picker.value='';if(!f)return;
     const s=instance,g=generation;

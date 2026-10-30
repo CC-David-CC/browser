@@ -1,1 +1,1 @@
-{"assets":["src/engine-worker.js","src/mailbox.mjs","src/policy.mjs"]}
+{"assets":["src/engine-worker.js","src/mailbox.mjs","src/policy.mjs","engine/manifest.json","engine/gecko.js","engine/gecko.wasm","engine/gecko.data","engine/wisp-client.mjs"]}

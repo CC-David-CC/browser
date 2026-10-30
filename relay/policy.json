@@ -1,0 +1,19 @@
+{
+  "version": "codi-browser-relay-policy/1",
+  "blacklist": [
+    "youtube.com", "youtu.be", "youtube-nocookie.com", "googlevideo.com", "ytimg.com",
+    "dailymotion.com", "dai.ly", "dmcdn.net",
+    "brighteon.com", "infowars.com", "banned.video",
+    "foxnews.com", "foxbusiness.com", "cnn.com", "cnn.io", "msnbc.com", "newsmax.com", "oann.com",
+    "facebook.com", "facebook.net", "fbcdn.net", "messenger.com",
+    "x.com", "twitter.com", "t.co", "twimg.com",
+    "bsky.app", "bsky.social", "bsky.network", "bsky.video"
+  ],
+  "whitelistEnabled": false,
+  "whitelist": [
+    "grainger.com", "mcmaster.com", "fastenal.com", "mscdirect.com", "zoro.com",
+    "digikey.com", "mouser.com", "automationdirect.com", "sparkfun.com", "adafruit.com"
+  ],
+  "tcpPorts": [80, 443],
+  "maxConnectionsPerUser": 64
+}

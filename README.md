@@ -7,8 +7,8 @@ profile; closing or resetting it discards that profile.
 
 **Status:** the pinned Gecko engine was built and exercised in an isolated
 Chrome harness. An offline HTML test page rendered, ran JavaScript, accepted
-mouse and keyboard input, and two engine windows ran independently. This app
-is not yet registered in the desktop menu. Public website access also needs an
+mouse and keyboard input, and two engine windows ran independently. It is integrated into an isolated local desktop test, but is not on the live
+site. Public website access also needs an
 authenticated, policy-controlled Wisp relay; none is configured. It is not
 ready for sensitive browsing or untrusted users.
 
@@ -67,9 +67,8 @@ the Gecko licenses, Emscripten/Rust requirements, native mailbox ABI, and
 run the offline tests, and rebuild. Do not substitute upstream's `dist/gecko.js`
 UI bundle for the raw runtime. A staged build alone does not mean it works:
 run the real-engine tests in `docs/ACCEPTANCE.md`, including multiple windows,
-close/reset during initialization, worker cleanup and input, before registering
-it in the desktop. Update the app asset manifest, builder extension/size limits, and desktop
-catalog size limits as needed for the actual engine files; verify CSP and cross-origin isolation on the
+close/reset during initialization, worker cleanup and input, before releasing it on the desktop. The app asset manifest and the builder and
+catalog limits have been updated for this engine; verify CSP and cross-origin isolation on the
 target desktop. The current live desktop blocks the adapter's blob script
 loading. Do not weaken the whole site's policy without an appropriate review.
 
@@ -82,3 +81,27 @@ credentials or user data.
 The 2026-10-30 development build produced about 227 MiB of WebAssembly and
 13 MiB of engine data, before compression. These sizes and runtime memory use
 matter on phones and limited connections; loading must remain on demand.
+
+## Relay destination policy
+
+`relay/policy.json` is the operator-editable starting policy for the planned
+server relay. The blacklist includes the requested video, news and social
+services and their listed subdomains. The whitelist is prefilled with Grainger,
+McMaster-Carr and other engineering suppliers, but `whitelistEnabled` is
+`false`. When enabled, a destination must match the whitelist and not match the
+blacklist. Search engines are not intentionally listed. TCP ports 80 and 443
+are the initial permitted ports.
+
+`relay/policy.py` validates that configuration and checks names and resolved
+addresses. A future relay must call it on every connection and connect to an
+exact vetted public address, so redirects, DNS changes and page subrequests do
+not bypass a one-time address-bar check. IP literals and private/loopback
+addresses are denied. Domain lists require maintenance and cannot guarantee
+blocking content rehosted on unrelated domains or accessed through other
+proxies. **There is no active Wisp relay yet, so this policy is not yet
+network enforcement.**
+
+The desktop implementation can open selected `.html`/`.htm` files from My
+files as well as upload a local HTML file. It copies the selected document to
+the temporary guest profile; sibling files, browser downloads to My files and
+persistent browser profiles are not implemented yet.

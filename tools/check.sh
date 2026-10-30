@@ -12,4 +12,4 @@ for root in ('tools','tests'):
 PY
 node --test tests/*.test.mjs
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_*.py' -v
-printf '\nOffline checks complete. Gecko and desktop/browser integration remain UNTESTED.\n'
+printf '\nOffline checks complete. This command does not test Gecko or desktop integration.\n'
