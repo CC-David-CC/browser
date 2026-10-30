@@ -163,3 +163,14 @@ request; it requires a private database and a configured administrator account I
 Its authentication callback and delivery transport are not yet connected. The
 operator can remove stored request results. Device-reported usage is not a
 complete or independently verified account of what a person did.
+
+## Phone input (development)
+
+On a touch screen, a tap is sent to Gecko as a click and a drag scrolls the
+page instead of clicking it. The Browser toolbar's Keyboard button explicitly
+shows the device keyboard for the page field that was last tapped. A local
+Chrome phone-emulation test exercised a real Gecko field and touch scrolling;
+it does not verify the physical Android keyboard, all input methods, selection,
+drag-and-drop, or accessibility. Desktop pointer behavior remains available.
+The keyboard bridge sends committed text to Gecko; complex composition and
+suggestion replacements still need device testing.

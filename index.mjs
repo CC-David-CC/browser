@@ -20,7 +20,7 @@ export function mount(host) {
   const toolbar=make('div','toolbar'),form=make('form'),address=make('input');
   address.type='text';address.inputMode='url';address.autocomplete='off';address.placeholder='https://example.com';address.setAttribute('aria-label','Website address');
   const buttons={};
-  for(const [name,label] of [['back','Back'],['forward','Forward'],['reload','Reload'],['stop','Stop'],['home','Home'],['open','Upload HTML'],['download','Download URL'],...(host.storage?[['files','Open from My files']]:[]),['reset','Reset engine']]) {
+  for(const [name,label] of [['back','Back'],['forward','Forward'],['reload','Reload'],['stop','Stop'],['home','Home'],['keyboard','Keyboard'],['open','Upload HTML'],['download','Download URL'],...(host.storage?[['files','Open from My files']]:[]),['reset','Reset engine']]) {
     const b=make('button','',label);b.type='button';b.disabled=name!=='reset';buttons[name]=b;toolbar.append(b);
   }
   const go=make('button','','Go');go.type='submit';go.disabled=true;
@@ -32,7 +32,8 @@ export function mount(host) {
   const status=make('div','status','Not yet tested in the target desktop.'),details=make('details');
   details.append(make('summary','','Diagnostics'));const logs=make('pre','details');details.append(logs);
   const picker=make('input');picker.type='file';picker.accept='.html,.htm,text/html';picker.hidden=true;
-  root.append(style,toolbar,warning,stage,status,details,picker);
+  const keyboard=make('textarea','mobile-keyboard');keyboard.setAttribute('aria-label','Website keyboard input');keyboard.autocapitalize='off';keyboard.autocomplete='off';keyboard.spellcheck=false;
+  stage.append(keyboard);root.append(style,toolbar,warning,stage,status,details,picker);
   const lifetime=new AbortController();
   let instance=null,runAbort=null,relay=null,disposed=false,generation=0,sizeTimer=0,seen=false;
   const logLines=[];
@@ -99,7 +100,7 @@ export function mount(host) {
     try{
       await s.start({...config,wispURL:endpoint});
       if(!current(s,g))return;
-      setControls(true);bindInput(canvas,s,runAbort.signal);
+      setControls(true);bindInput(canvas,s,runAbort.signal,{keyboard});
       s.notify('visibility',{visible:seen&&!doc.hidden});
       applySize();
       await s.request('open-html',{html:HOME_HTML});
@@ -114,6 +115,7 @@ export function mount(host) {
   form.addEventListener('submit',e=>{e.preventDefault();try{void operation('navigate',{url:normalizeNavigation(address.value)});}catch(err){report(err);}},{signal:lifetime.signal});
   for(const name of ['back','forward','reload','stop'])buttons[name].addEventListener('click',()=>void operation('control',{action:name}),{signal:lifetime.signal});
   buttons.home.addEventListener('click',()=>void operation('open-html',{html:HOME_HTML}),{signal:lifetime.signal});
+  buttons.keyboard.addEventListener('click',()=>{host.ui.enableKeyboard?.();keyboard.inputMode='text';keyboard.focus({preventScroll:true});},{signal:lifetime.signal});
   buttons.reset.addEventListener('click',()=>void start(),{signal:lifetime.signal});
   buttons.open.addEventListener('click',()=>picker.click(),{signal:lifetime.signal});
   buttons.download.addEventListener('click',async()=>{
