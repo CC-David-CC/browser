@@ -64,8 +64,8 @@ run the offline tests, and rebuild. Do not substitute upstream's `dist/gecko.js`
 UI bundle for the raw runtime. A staged build alone does not mean it works:
 run the real-engine tests in `docs/ACCEPTANCE.md`, including multiple windows,
 close/reset during initialization, worker cleanup and input, before registering
-it in the desktop. Update the app asset manifest and builder limits as needed
-for the actual engine files, and verify CSP and cross-origin isolation on the
+it in the desktop. Update the app asset manifest, builder extension/size limits, and desktop
+catalog size limits as needed for the actual engine files; verify CSP and cross-origin isolation on the
 target desktop. The current live desktop blocks the adapter's blob script
 loading. Do not weaken the whole site's policy without an appropriate review.
 
