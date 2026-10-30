@@ -1,0 +1,10 @@
+{
+  "repository": "https://github.com/HeyPuter/firefox-wasm.git",
+  "commit": "bc69aaa5e2c5388bcf93a43b975b490bb940f4c0",
+  "gecko_repository": "https://github.com/HeyPuter/firefox.git",
+  "gecko_commit": "2e1e835a5da5907e5ceef19aade58a7493f1e34d",
+  "reviewed_on": "2026-10-30",
+  "engine_abi": "browser-gecko-mailbox-v1",
+  "emscripten": "6.0.1",
+  "status": "source-inspected; no engine build or browser execution performed"
+}

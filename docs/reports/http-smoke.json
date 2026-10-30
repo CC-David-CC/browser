@@ -1,0 +1,11 @@
+{
+  "demo_status": 200,
+  "headers": {
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Embedder-Policy": "require-corp",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'"
+  },
+  "module_mime": "text/javascript",
+  ".gitignore": 404,
+  "engine/manifest.json": 404
+}

@@ -1,0 +1,38 @@
+# Test status — source handoff 0.1.0
+
+Recorded: 2026-10-30.
+
+**The browser application is not yet tested in a browser or in the target desktop. Gecko and the native patch have not been compiled or run here.**
+
+## Checks actually executed
+
+Environment: Node v22.16.0; Python 3.13.5; Linux container.
+
+| Check | Result | What it establishes |
+|---|---|---|
+| JavaScript `node --check` across adapter, tests and tooling | PASS | Parser accepts source; no browser runtime validation |
+| `bash -n` for shell tools | PASS | Shell syntax only |
+| Python source compilation | PASS | Python syntax only |
+| Loopback HTTP server smoke check | PASS | HTML 200, JavaScript MIME, isolation/CSP headers, hidden-file 404 and missing-engine-manifest 404; no browser or WASM execution |
+| `node --test tests/*.test.mjs` | 79 passed, 0 failed | Policy, synthetic mailbox, fake-worker lifecycle and static contract tests |
+| `python3 -m unittest discover -s tests -p 'test_*.py' -v` | 7 passed, 0 failed | Patch transforms on synthetic anchors; no native compilation |
+
+Reproduce these checks with `bash tools/check.sh`. They require no package install, network access or Gecko build. The fake worker and synthetic shared memory are isolated test fixtures, never runtime fallbacks.
+
+## Not executed / not established
+
+- Fetch/build of the full pinned Gecko source and toolchain in this environment.
+- C++ compilation or linking of `native/embed-host.cpp`.
+- Raw engine/pthread initialization inside the owning Web Worker.
+- Home or smoke-page rendering by Gecko.
+- Real user input, navigation, JavaScript execution, network traffic or TLS.
+- Multiwindow isolation, actual descendant worker teardown, persistent memory behavior.
+- A Wisp relay configuration or deployment.
+- The real desktop's app loader, files, session, networking, UI or security policies.
+- Security audit, web-platform conformance, performance benchmark or accessibility validation.
+
+All acceptance rows in `docs/ACCEPTANCE.md` remain NOT RUN. The generated manifest deliberately labels builds `runtimeTested: false`; successful source tests/staging do not change that automatically.
+
+## Scope of the delivered archive
+
+This is code and build tooling, not a prebuilt browser release. `engine/` has documentation but no engine binaries or manifest until a build is completed. The current app reports that missing dependency honestly. Do not replace that error with simulated content and call the engine tested.

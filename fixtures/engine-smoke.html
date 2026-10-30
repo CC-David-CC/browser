@@ -1,0 +1,24 @@
+<!doctype html><meta charset="utf-8"><title>Gecko smoke fixture</title>
+<style>
+body{font:18px system-ui;margin:24px;background:#edf2f7;color:#172033}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+article{background:white;padding:20px;border:1px solid #94a3b8}.flex{display:flex;gap:10px}input,button,select{font:inherit;padding:8px}
+#animated{background:#2563eb;height:20px;width:20px;animation:slide 2s infinite alternate}@keyframes slide{to{transform:translateX(150px)}}
+@media(max-width:640px){.grid{grid-template-columns:1fr}}
+</style>
+<h1>Independent engine smoke fixture</h1><div class="grid">
+<article><h2>Guest script</h2><pre id="results">NOT EXECUTED</pre><button id="click">Clicks: 0</button></article>
+<article><h2>Layout and input</h2><div class="flex"><input placeholder="Type, select, edit"><select><option>A</option><option>B</option></select></div><div id="animated"></div></article>
+<article><h2>Canvas API</h2><canvas id="drawing" width="280" height="120"></canvas></article>
+<article><h2>Native history</h2><a href="#one">Fragment one</a> · <a href="#two">Fragment two</a><p>Use browser Back/Forward; then edit the URL in the address bar.</p></article>
+</div><p>Passing this page is NOT a compatibility suite or a security audit.</p>
+<script>
+const results=[];function check(name,ok){results.push((ok?'PASS ':'FAIL ')+name)}
+check('array/arrow', [1,2,3].map(x=>x*x).join(',')==='1,4,9');
+class Thing{value(){return 42}}check('class',new Thing().value()===42);
+check('no desktop host',typeof host==='undefined');
+check('no outer sentinel',typeof __DESKTOP_SENTINEL__==='undefined');
+check('no Emscripten loader',typeof createGecko==='undefined');
+const c=document.getElementById('drawing').getContext('2d');c.fillStyle='#2563eb';c.fillRect(10,10,80,80);c.fillStyle='#172033';c.fillText('Guest canvas',110,55);
+let n=0;document.getElementById('click').onclick=()=>document.getElementById('click').textContent='Clicks: '+ ++n;
+Promise.resolve(17).then(x=>{check('Promise',x===17);document.getElementById('results').textContent=results.join('\n')});
+</script>

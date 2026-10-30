@@ -1,0 +1,498 @@
+TAP version 13
+# Subtest: single synchronous desktop entrypoint
+ok 1 - single synchronous desktop entrypoint
+  ---
+  duration_ms: 0.937346
+  type: 'test'
+  ...
+# Subtest: no invented host service calls
+ok 2 - no invented host service calls
+  ---
+  duration_ms: 1.949175
+  type: 'test'
+  ...
+# Subtest: guest page not injected into outer DOM
+ok 3 - guest page not injected into outer DOM
+  ---
+  duration_ms: 0.266783
+  type: 'test'
+  ...
+# Subtest: build pin matches runtime pin
+ok 4 - build pin matches runtime pin
+  ---
+  duration_ms: 0.385051
+  type: 'test'
+  ...
+# Subtest: no engine load on import, engine starts in worker
+ok 5 - no engine load on import, engine starts in worker
+  ---
+  duration_ms: 0.281205
+  type: 'test'
+  ...
+# Subtest: offline is the default, no public relay hardcoded
+ok 6 - offline is the default, no public relay hardcoded
+  ---
+  duration_ms: 0.219151
+  type: 'test'
+  ...
+# Subtest: fresh worker does not paint a nonexistent first document
+ok 7 - fresh worker does not paint a nonexistent first document
+  ---
+  duration_ms: 0.270308
+  type: 'test'
+  ...
+# Subtest: ABI offsets match inspected wasm32 struct
+ok 8 - ABI offsets match inspected wasm32 struct
+  ---
+  duration_ms: 0.835533
+  type: 'test'
+  ...
+# Subtest: BGRA copied to RGBA, not shared with engine
+ok 9 - BGRA copied to RGBA, not shared with engine
+  ---
+  duration_ms: 7.373486
+  type: 'test'
+  ...
+# Subtest: native control result parsed
+ok 10 - native control result parsed
+  ---
+  duration_ms: 3.68621
+  type: 'test'
+  ...
+# Subtest: reject parallel mailbox command, allow later completed operation
+ok 11 - reject parallel mailbox command, allow later completed operation
+  ---
+  duration_ms: 8.568056
+  type: 'test'
+  ...
+# Subtest: page evaluation and DOM mirroring opcodes not exposed
+ok 12 - page evaluation and DOM mirroring opcodes not exposed
+  ---
+  duration_ms: 0.376359
+  type: 'test'
+  ...
+# Subtest: oversized UTF8 rejected before submission without poisoning mailbox
+ok 13 - oversized UTF8 rejected before submission without poisoning mailbox
+  ---
+  duration_ms: 0.252462
+  type: 'test'
+  ...
+# Subtest: timeout poisons mailbox; no uncertain reuse
+ok 14 - timeout poisons mailbox; no uncertain reuse
+  ---
+  duration_ms: 9.94105
+  type: 'test'
+  ...
+# Subtest: completed native failure is recoverable
+ok 15 - completed native failure is recoverable
+  ---
+  duration_ms: 9.652735
+  type: 'test'
+  ...
+# Subtest: malformed frame poisons mailbox
+ok 16 - malformed frame poisons mailbox
+  ---
+  duration_ms: 5.285215
+  type: 'test'
+  ...
+# Subtest: out-of-bounds native memory rejected
+ok 17 - out-of-bounds native memory rejected
+  ---
+  duration_ms: 5.084833
+  type: 'test'
+  ...
+# Subtest: shared heap views reacquired after growth
+ok 18 - shared heap views reacquired after growth
+  ---
+  duration_ms: 3.77248
+  type: 'test'
+  ...
+# Subtest: abort before submission does not change state
+ok 19 - abort before submission does not change state
+  ---
+  duration_ms: 0.233493
+  type: 'test'
+  ...
+# Subtest: abort in flight fails instance
+ok 20 - abort in flight fails instance
+  ---
+  duration_ms: 3.715544
+  type: 'test'
+  ...
+# Subtest: reject impossible mailbox pointers without wraparound
+ok 21 - reject impossible mailbox pointers without wraparound
+  ---
+  duration_ms: 0.248125
+  type: 'test'
+  ...
+# Subtest: non-shared memory rejected
+ok 22 - non-shared memory rejected
+  ---
+  duration_ms: 0.10563
+  type: 'test'
+  ...
+# Subtest: malformed control JSON fails instance
+ok 23 - malformed control JSON fails instance
+  ---
+  duration_ms: 3.985171
+  type: 'test'
+  ...
+# Subtest: UTF8 URL and key stored without truncation
+ok 24 - UTF8 URL and key stored without truncation
+  ---
+  duration_ms: 3.606619
+  type: 'test'
+  ...
+# Subtest: navigation normalization: example.com
+ok 25 - navigation normalization: example.com
+  ---
+  duration_ms: 1.285242
+  type: 'test'
+  ...
+# Subtest: navigation normalization: example.com:8443?q=1
+ok 26 - navigation normalization: example.com:8443?q=1
+  ---
+  duration_ms: 0.292371
+  type: 'test'
+  ...
+# Subtest: navigation normalization:  [::1]:8080/ 
+ok 27 - navigation normalization:  [::1]:8080/ 
+  ---
+  duration_ms: 0.105389
+  type: 'test'
+  ...
+# Subtest: navigation normalization: http://localhost:8080
+ok 28 - navigation normalization: http://localhost:8080
+  ---
+  duration_ms: 0.105129
+  type: 'test'
+  ...
+# Subtest: navigation normalization: about:blank
+ok 29 - navigation normalization: about:blank
+  ---
+  duration_ms: 0.066971
+  type: 'test'
+  ...
+# Subtest: navigation normalization: https://example.com/a\#b
+ok 30 - navigation normalization: https://example.com/a\#b
+  ---
+  duration_ms: 0.093701
+  type: 'test'
+  ...
+# Subtest: reject invalid or privileged navigation: 
+ok 31 - reject invalid or privileged navigation: 
+  ---
+  duration_ms: 0.235046
+  type: 'test'
+  ...
+# Subtest: reject invalid or privileged navigation: null
+ok 32 - reject invalid or privileged navigation: null
+  ---
+  duration_ms: 0.309338
+  type: 'test'
+  ...
+# Subtest: reject invalid or privileged navigation: javascript:alert(1)
+ok 33 - reject invalid or privileged navigation: javascript:alert(1)
+  ---
+  duration_ms: 0.263388
+  type: 'test'
+  ...
+# Subtest: reject invalid or privileged navigation: data:text/html,test
+ok 34 - reject invalid or privileged navigation: data:text/html,test
+  ---
+  duration_ms: 0.301626
+  type: 'test'
+  ...
+# Subtest: reject invalid or privileged navigation: file:///etc/passwd
+ok 35 - reject invalid or privileged navigation: file:///etc/passwd
+  ---
+  duration_ms: 1.041183
+  type: 'test'
+  ...
+# Subtest: reject invalid or privileged navigation: chrome://settings
+ok 36 - reject invalid or privileged navigation: chrome://settings
+  ---
+  duration_ms: 0.232702
+  type: 'test'
+  ...
+# Subtest: reject invalid or privileged navigation: about:config
+ok 37 - reject invalid or privileged navigation: about:config
+  ---
+  duration_ms: 0.075003
+  type: 'test'
+  ...
+# Subtest: reject invalid or privileged navigation: https://user:pass@a.test/
+ok 38 - reject invalid or privileged navigation: https://user:pass@a.test/
+  ---
+  duration_ms: 0.060732
+  type: 'test'
+  ...
+# Subtest: reject invalid or privileged navigation: https://a.test/a\\nb
+ok 39 - reject invalid or privileged navigation: https://a.test/a\\nb
+  ---
+  duration_ms: 0.088754
+  type: 'test'
+  ...
+# Subtest: reject invalid or privileged navigation: https://a.test/space here
+ok 40 - reject invalid or privileged navigation: https://a.test/space here
+  ---
+  duration_ms: 0.046931
+  type: 'test'
+  ...
+# Subtest: reject invalid or privileged navigation: https://a.test/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ok 41 - reject invalid or privileged navigation: https://a.test/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  ---
+  duration_ms: 0.07278
+  type: 'test'
+  ...
+# Subtest: network is opt-in
+ok 42 - network is opt-in
+  ---
+  duration_ms: 0.094232
+  type: 'test'
+  ...
+# Subtest: approved relay form
+ok 43 - approved relay form
+  ---
+  duration_ms: 0.069906
+  type: 'test'
+  ...
+# Subtest: reject relay: ws://relay.test/wisp/
+ok 44 - reject relay: ws://relay.test/wisp/
+  ---
+  duration_ms: 0.074002
+  type: 'test'
+  ...
+# Subtest: reject relay: https://relay.test/wisp/
+ok 45 - reject relay: https://relay.test/wisp/
+  ---
+  duration_ms: 0.043666
+  type: 'test'
+  ...
+# Subtest: reject relay: wss://u:p@relay.test/
+ok 46 - reject relay: wss://u:p@relay.test/
+  ---
+  duration_ms: 0.049796
+  type: 'test'
+  ...
+# Subtest: reject relay: wss://relay.test/path
+ok 47 - reject relay: wss://relay.test/path
+  ---
+  duration_ms: 0.095074
+  type: 'test'
+  ...
+# Subtest: reject relay: wss://relay.test/?token=x
+ok 48 - reject relay: wss://relay.test/?token=x
+  ---
+  duration_ms: 0.054663
+  type: 'test'
+  ...
+# Subtest: reject relay: wss://relay.test/\#x
+ok 49 - reject relay: wss://relay.test/\#x
+  ---
+  duration_ms: 0.041492
+  type: 'test'
+  ...
+# Subtest: viewport scales as one unit
+ok 50 - viewport scales as one unit
+  ---
+  duration_ms: 0.661489
+  type: 'test'
+  ...
+# Subtest: invalid viewport rejected
+ok 51 - invalid viewport rejected
+  ---
+  duration_ms: 0.123326
+  type: 'test'
+  ...
+# Subtest: asset resolution is local
+ok 52 - asset resolution is local
+  ---
+  duration_ms: 0.113151
+  type: 'test'
+  ...
+# Subtest: reject artifact path: ../gecko.js
+ok 53 - reject artifact path: ../gecko.js
+  ---
+  duration_ms: 0.093441
+  type: 'test'
+  ...
+# Subtest: reject artifact path: https://bad.test/x
+ok 54 - reject artifact path: https://bad.test/x
+  ---
+  duration_ms: 0.055995
+  type: 'test'
+  ...
+# Subtest: reject artifact path: /gecko.js
+ok 55 - reject artifact path: /gecko.js
+  ---
+  duration_ms: 0.069535
+  type: 'test'
+  ...
+# Subtest: reject artifact path: .hidden
+ok 56 - reject artifact path: .hidden
+  ---
+  duration_ms: 0.044026
+  type: 'test'
+  ...
+# Subtest: reject artifact path: a/b
+ok 57 - reject artifact path: a/b
+  ---
+  duration_ms: 0.035323
+  type: 'test'
+  ...
+# Subtest: reject artifact path: x?token=1
+ok 58 - reject artifact path: x?token=1
+  ---
+  duration_ms: 0.034062
+  type: 'test'
+  ...
+# Subtest: recognized manifest accepted
+ok 59 - recognized manifest accepted
+  ---
+  duration_ms: 0.252191
+  type: 'test'
+  ...
+# Subtest: reject manifest: wrong ABI
+ok 60 - reject manifest: wrong ABI
+  ---
+  duration_ms: 0.117417
+  type: 'test'
+  ...
+# Subtest: reject manifest: wrong pin
+ok 61 - reject manifest: wrong pin
+  ---
+  duration_ms: 0.147322
+  type: 'test'
+  ...
+# Subtest: reject manifest: missing asset
+ok 62 - reject manifest: missing asset
+  ---
+  duration_ms: 0.117117
+  type: 'test'
+  ...
+# Subtest: reject manifest: bad digest
+ok 63 - reject manifest: bad digest
+  ---
+  duration_ms: 0.097898
+  type: 'test'
+  ...
+# Subtest: reject manifest: zero size
+ok 64 - reject manifest: zero size
+  ---
+  duration_ms: 0.110927
+  type: 'test'
+  ...
+# Subtest: reject manifest: UI bundle substituted
+ok 65 - reject manifest: UI bundle substituted
+  ---
+  duration_ms: 0.091959
+  type: 'test'
+  ...
+# Subtest: reject cross-origin manifest
+ok 66 - reject cross-origin manifest
+  ---
+  duration_ms: 0.07917
+  type: 'test'
+  ...
+# Subtest: errors bounded as text
+ok 67 - errors bounded as text
+  ---
+  duration_ms: 0.070586
+  type: 'test'
+  ...
+# Subtest: startup creates one worker and waits asynchronously
+ok 68 - startup creates one worker and waits asynchronously
+  ---
+  duration_ms: 4.728575
+  type: 'test'
+  ...
+# Subtest: two sessions have independent pending requests and worker lifetimes
+ok 69 - two sessions have independent pending requests and worker lifetimes
+  ---
+  duration_ms: 3.621176
+  type: 'test'
+  ...
+# Subtest: double disposal is harmless, pending work rejected
+ok 70 - double disposal is harmless, pending work rejected
+  ---
+  duration_ms: 1.808242
+  type: 'test'
+  ...
+# Subtest: close during startup ignores late engine ready
+ok 71 - close during startup ignores late engine ready
+  ---
+  duration_ms: 1.703334
+  type: 'test'
+  ...
+# Subtest: out-of-order replies resolve their own calls
+ok 72 - out-of-order replies resolve their own calls
+  ---
+  duration_ms: 1.65484
+  type: 'test'
+  ...
+# Subtest: worker failure marks event fatal and terminates
+ok 73 - worker failure marks event fatal and terminates
+  ---
+  duration_ms: 1.692307
+  type: 'test'
+  ...
+# Subtest: request timeout closes the session
+ok 74 - request timeout closes the session
+  ---
+  duration_ms: 10.129931
+  type: 'test'
+  ...
+# Subtest: bounded pending requests
+ok 75 - bounded pending requests
+  ---
+  duration_ms: 0.88637
+  type: 'test'
+  ...
+# Subtest: event callback failure still disposes after fatal failure
+ok 76 - event callback failure still disposes after fatal failure
+  ---
+  duration_ms: 1.942194
+  type: 'test'
+  ...
+# Subtest: missing graceful acknowledgment still terminates once
+ok 77 - missing graceful acknowledgment still terminates once
+  ---
+  duration_ms: 280.87516
+  type: 'test'
+  ...
+# Subtest: closed session neither sends input nor accepts requests
+ok 78 - closed session neither sends input nor accepts requests
+  ---
+  duration_ms: 1.512205
+  type: 'test'
+  ...
+# Subtest: session cannot start twice
+ok 79 - session cannot start twice
+  ---
+  duration_ms: 1.562721
+  type: 'test'
+  ...
+1..79
+# tests 79
+# suites 0
+# pass 79
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 428.313683
+test_duplicate_anchor_rejected (test_patch.PatchTests.test_duplicate_anchor_rejected) ... ok
+test_lifetime_and_abi_exports (test_patch.PatchTests.test_lifetime_and_abi_exports) ... ok
+test_missing_anchor_rejected (test_patch.PatchTests.test_missing_anchor_rejected) ... ok
+test_native_object_added (test_patch.PatchTests.test_native_object_added) ... ok
+test_navigation_patch (test_patch.PatchTests.test_navigation_patch) ... ok
+test_no_page_global_canvas_transfer (test_patch.PatchTests.test_no_page_global_canvas_transfer) ... ok
+test_transform_does_not_mutate_input (test_patch.PatchTests.test_transform_does_not_mutate_input) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.000s
+
+OK
+
+Offline checks complete. Gecko and desktop/browser integration remain UNTESTED.
