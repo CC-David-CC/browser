@@ -25,6 +25,8 @@ The original adapter is MIT licensed; see `docs/LICENSE` and
 `docs/THIRD_PARTY_NOTICES.md` for distribution requirements. The supplied
 `docs/SOURCE_MANIFEST.json` describes the original handoff, before this folder
 was reorganized; it is not a manifest of the current files.
+`docs/SOURCE_PROVISION.md` records the exact source snapshots and local patch
+for the current engine build, along with the outstanding distribution review.
 
 ## Build or update the engine
 
