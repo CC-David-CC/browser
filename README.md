@@ -114,9 +114,10 @@ not page URLs, paths, messages or content. The device uses a non-exportable
 Web Crypto signing key and a hash chain; multiple tabs serialize updates with
 Web Locks. A separately saved head hash detects missing or changed records.
 Clearing the browser's site data removes the records and key. The private key
-never leaves the browser. There is currently no implemented request/report
-transport, account binding for a device signing key, or administrator UI, so
-reports cannot yet be requested or combined across devices. A signature shows
+never leaves the browser. A source-only request coordinator verifies reports against an authenticated
+account and combines device reports without double-counting repeated snapshots.
+There is no request/report transport, production account binding, or administrator
+UI yet, so reports cannot currently be requested from live devices. A signature shows
 that a particular key signed a report; it does not prove a person visited a
 site, that the device clock was accurate, or that a user-controlled client
 reported every request.
@@ -152,3 +153,9 @@ implemented and tested.
 IP-range and country controls are independent of the domain lists. Their
 source template and rollout notes are in `active-system/network_policy/README.md`.
 They are not yet installed across the live login and egress services.
+
+The request coordinator stores received reports only after an explicit administrator
+request; it requires a private database and a configured administrator account ID.
+Its authentication callback and delivery transport are not yet connected. The
+operator can remove stored request results. Device-reported usage is not a
+complete or independently verified account of what a person did.
