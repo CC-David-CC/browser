@@ -34,7 +34,7 @@ export function mount(host) {
   const picker=make('input');picker.type='file';picker.accept='.html,.htm,text/html';picker.hidden=true;
   root.append(style,toolbar,warning,stage,status,details,picker);
   const lifetime=new AbortController();
-  let instance=null,runAbort=null,disposed=false,generation=0,sizeTimer=0,seen=false;
+  let instance=null,runAbort=null,relay=null,disposed=false,generation=0,sizeTimer=0,seen=false;
   const logLines=[];
   const log=s=>{logLines.push(String(s).slice(0,2000));if(logLines.length>60)logLines.shift();logs.textContent=logLines.join('\n');};
   const setStatus=s=>{if(!disposed)status.textContent=s;};
@@ -54,13 +54,20 @@ export function mount(host) {
   }
   async function start(){
     if(disposed)return;const g=++generation;
-    runAbort?.abort();instance?.dispose();setControls(false);info.hidden=false;
+    runAbort?.abort();instance?.dispose();relay?.close();relay=null;setControls(false);info.hidden=false;
     info.textContent='Starting independent Gecko/WASM. The engine must first be built and staged locally.';
     if(!globalThis.crossOriginIsolated||typeof SharedArrayBuffer==='undefined') {
       info.textContent='Missing cross-origin isolation. This engine needs SharedArrayBuffer/pthreads.\n\nIntegrator: review COOP/COEP against the existing desktop before changing headers. See docs/AGENT_HANDOFF.md.\n\nNo iframe or remote-rendering fallback will be used.';return;
     }
     let endpoint;
-    try{endpoint=relayURL(config.wispURL,doc.location.href);}catch(e){report(e);info.textContent=textError(e);return;}
+    try{
+      if(host.browserRelay?.available()){
+        const opened=await host.browserRelay.open({onFailure:error=>{if(generation===g&&!disposed){setStatus('Browser network disconnected: '+textError(error));instance?.dispose();setControls(false);info.hidden=false;info.textContent='Network connection ended. Use Reset engine to reconnect.';}}});
+        if(disposed||generation!==g){opened.close();return;}
+        relay=opened;
+      }
+      endpoint=relayURL(relay?.url??config.wispURL,doc.location.href);
+    }catch(e){report(e);info.textContent=textError(e);return;}
     const s=new BrowserSession({
       workerURL:new URL('./src/engine-worker.js',import.meta.url),
       startupTimeoutMs:config.startupTimeoutMs,commandTimeoutMs:config.commandTimeoutMs,
@@ -135,7 +142,7 @@ export function mount(host) {
   return {element:body,dispose(){
     if(disposed)return;disposed=true;generation++;clearTimeout(sizeTimer);
     lifetime.abort();runAbort?.abort();ro.disconnect();io.disconnect();
-    instance?.dispose();instance=null;canvas.width=1;canvas.height=1;
+    instance?.dispose();instance=null;relay?.close();relay=null;canvas.width=1;canvas.height=1;
     // The desktop owns element removal. Do not close its Linux/network services.
   }};
 }

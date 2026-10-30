@@ -51,6 +51,9 @@ class WispRelayTests(unittest.IsolatedAsyncioTestCase):
             messages=[await self.read(ws),await self.read(ws)]
             self.assertIn(((2,2),b'hello'),messages)
             self.assertEqual(self.calls,['grainger.com']);self.assertEqual(self.connections,[('1.1.1.1',443)])
+        for _ in range(100):
+            if not self.relay.users:break
+            await asyncio.sleep(.01)
         self.assertFalse(self.relay.users)
         self.assertEqual(self.audit,[], 'Server audit must stay off by default')
 
@@ -73,6 +76,9 @@ class WispRelayTests(unittest.IsolatedAsyncioTestCase):
             release.set()
             slow=[await self.read(ws),await self.read(ws)]
             self.assertIn(((2,1),b'queued'),slow)
+        for _ in range(100):
+            if not self.relay.users:break
+            await asyncio.sleep(.01)
         self.assertFalse(self.relay.users)
 
     async def test_disconnect_cancels_slow_connection_and_releases_capacity(self):
@@ -89,7 +95,26 @@ class WispRelayTests(unittest.IsolatedAsyncioTestCase):
         await asyncio.wait_for(started.wait(),2)
         await ws.close()
         await asyncio.wait_for(cancelled.wait(),2)
+        for _ in range(100):
+            if not self.relay.users:break
+            await asyncio.sleep(.01)
         self.assertFalse(self.relay.users)
+
+    async def test_renewed_lease_keeps_socket_and_revocation_closes_it(self):
+        principal=SimpleNamespace(kind='registered',sub='user:test',deadline=time.time()+0.5)
+        async def authenticate(request):return principal
+        self.relay.authenticate=authenticate
+        url=f'http://127.0.0.1:{self.port}/wisp/'
+        async with self.client.ws_connect(url,headers={'Origin':'http://127.0.0.1'}) as ws:
+            await self.read(ws)
+            await asyncio.sleep(0.2);principal.deadline=time.time()+2
+            await asyncio.sleep(0.5)
+            await ws.send_bytes(self.pkt(1,1,bytes([1])+struct.pack('<H',443)+b'grainger.com'))
+            await ws.send_bytes(self.pkt(2,1,b'after-renewal'))
+            self.assertIn(((2,1),b'after-renewal'),[await self.read(ws),await self.read(ws)])
+            principal.deadline=0
+            msg=await asyncio.wait_for(ws.receive(),2)
+            self.assertIn(msg.type,(WSMsgType.CLOSE,WSMsgType.CLOSED,WSMsgType.CLOSING))
 
     async def test_shared_outgoing_ip_block_is_checked_before_connect(self):
         def deny(ip):raise ValueError('blocked')

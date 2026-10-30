@@ -133,7 +133,15 @@ class Relay:
                 await finish(stream_id,3);await ws.close(code=1011,message=b'Audit unavailable');return
             entry['tasks']=[asyncio.create_task(pump_out(stream_id,entry)),asyncio.create_task(pump_in(stream_id,entry))]
         await packet(3,0,struct.pack('<I',WINDOW))
-        expiry=asyncio.get_running_loop().call_later(max(0,principal.deadline-time.time()),lambda:asyncio.create_task(ws.close()))
+        async def expire_lease():
+            while not ws.closed:
+                remaining=principal.deadline-time.time()
+                if remaining<=0:
+                    await ws.close(code=1008,message=b'Relay session expired');return
+                # The authenticated host may renew the same bound lease. Polling
+                # at most once per second also makes explicit revocation prompt.
+                await asyncio.sleep(min(remaining,1))
+        expiry=asyncio.create_task(expire_lease())
         try:
             async for message in ws:
                 if principal.deadline <= time.time(): break
@@ -179,5 +187,6 @@ class Relay:
             for task in tasks:task.cancel()
             if tasks:await asyncio.gather(*tasks,return_exceptions=True)
             for stream_id in list(streams): await finish(stream_id)
+            await asyncio.gather(expiry,return_exceptions=True)
             await ws.close()
         return ws
