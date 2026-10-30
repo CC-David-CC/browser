@@ -20,7 +20,7 @@ export function mount(host) {
   const toolbar=make('div','toolbar'),form=make('form'),address=make('input');
   address.type='text';address.inputMode='url';address.autocomplete='off';address.placeholder='https://example.com';address.setAttribute('aria-label','Website address');
   const buttons={};
-  for(const [name,label] of [['back','Back'],['forward','Forward'],['reload','Reload'],['stop','Stop'],['home','Home'],['open','Upload HTML'],...(host.storage?[['files','Open from My files']]:[]),['reset','Reset engine']]) {
+  for(const [name,label] of [['back','Back'],['forward','Forward'],['reload','Reload'],['stop','Stop'],['home','Home'],['open','Upload HTML'],['download','Download URL'],...(host.storage?[['files','Open from My files']]:[]),['reset','Reset engine']]) {
     const b=make('button','',label);b.type='button';b.disabled=name!=='reset';buttons[name]=b;toolbar.append(b);
   }
   const go=make('button','','Go');go.type='submit';go.disabled=true;
@@ -116,6 +116,24 @@ export function mount(host) {
   buttons.home.addEventListener('click',()=>void operation('open-html',{html:HOME_HTML}),{signal:lifetime.signal});
   buttons.reset.addEventListener('click',()=>void start(),{signal:lifetime.signal});
   buttons.open.addEventListener('click',()=>picker.click(),{signal:lifetime.signal});
+  buttons.download.addEventListener('click',async()=>{
+    const s=instance,g=generation,connection=relay;
+    try{
+      if(!connection?.download)throw Error('Connect Browser networking before downloading.');
+      const url=normalizeNavigation(address.value),parsed=new URL(url);
+      if(!['http:','https:'].includes(parsed.protocol))throw Error('Enter an HTTP or HTTPS download URL.');
+      let suggested=decodeURIComponent(parsed.pathname.split('/').pop()||'download').replace(/[\/\\\u0000-\u001f\u007f]/g,'_');
+      if(!suggested||suggested==='.'||suggested==='..')suggested='download';
+      const requested=doc.defaultView.prompt('Save download in My files as:',suggested.slice(0,120));
+      if(requested===null)return;
+      const context=await host.storage.mirrorFileContext();if(!current(s,g)||!context.valid())return;
+      const name=context.name(requested);setStatus('Downloading…');
+      if(usageOwner&&host.storage.signedInSubject?.()===usageOwner)void recordDomain(usageOwner,parsed.hostname).catch(error=>log(textError(error)));
+      const result=await connection.download(url);if(!current(s,g)||!context.valid())return;
+      for(const domain of result.domains.slice(1))if(usageOwner&&host.storage.signedInSubject?.()===usageOwner)void recordDomain(usageOwner,domain).catch(error=>log(textError(error)));
+      await context.files.write('/'+name,result.data);if(current(s,g))setStatus('Saved to My files. Server synchronization may continue in the background.');
+    }catch(error){if(current(s,g))report(error);}
+  },{signal:lifetime.signal});
   buttons.files?.addEventListener('click',async()=>{
     const s=instance,g=generation;
     try{

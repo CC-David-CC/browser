@@ -103,8 +103,11 @@ network enforcement.**
 
 The desktop implementation can open selected `.html`/`.htm` files from My
 files as well as upload a local HTML file. It copies the selected document to
-the temporary guest profile; sibling files, browser downloads to My files and
-persistent browser profiles are not implemented yet.
+the temporary guest profile; sibling files and persistent browser profiles are
+not implemented yet. The development relay also supports an explicit Download
+URL action into My files, limited to 8 MiB. That independent fetch does not
+include Gecko cookies, and ordinary clicked downloads inside Gecko are not yet
+integrated. Every redirect is checked against the relay destination policy.
 
 ## Domain usage records
 
@@ -143,9 +146,10 @@ The current source-only relay prototype implements bounded Wisp v1 TCP streams,
 checks the destination policy before resolving and connects only to a vetted
 public address. Its test fixture exercised a real Gecko request through the
 relay, rejected a YouTube request before DNS lookup, and stored signed domain
-requests in the test browser. This fixture supplies a fake test identity and
-local test destination; it is **not** production authentication, a public
-relay, a general website compatibility test, or proof of TLS behavior. There is
+requests in the test browser. That earlier fixture supplied a fake test identity and local destination. A
+later isolated desktop test used the real local issuer and rendered a public
+HTTPS page through the authenticated relay. It is not a public relay, a broad
+website compatibility test, or proof of production security. There is
 no live endpoint until the registered-account authorization, trusted source IP,
 service isolation, optional audit key custody, and policy deployment are
 implemented and tested.

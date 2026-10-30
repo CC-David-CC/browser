@@ -1,0 +1,66 @@
+"""Bounded server-mediated URL download into the visitor's account files.
+
+This fetches an explicitly supplied URL, not the Gecko profile: cookies and
+other browser credentials are deliberately not copied. Every redirect gets a
+fresh policy and DNS check, and the connector receives only validated addresses.
+"""
+import asyncio
+import ipaddress
+import socket
+from pathlib import PurePosixPath
+from aiohttp import ClientSession, ClientTimeout, TCPConnector, hdrs
+from aiohttp.abc import AbstractResolver
+from yarl import URL
+from .policy import DestinationPolicy, PolicyDenied
+
+MAX_DOWNLOAD=8*1024*1024
+MAX_REDIRECTS=5
+
+class CheckedResolver(AbstractResolver):
+    def __init__(self,policy,resolver,check):self.policy=policy;self.resolver=resolver;self.check=check;self.allowed=[]
+    async def resolve(self,host,port=0,family=socket.AF_UNSPEC):
+        values=self.policy.check_addresses(await self.resolver(host,port))
+        self.allowed=list(values)
+        for ip in values:self.check(ip)
+        return [{'hostname':host,'host':ip,'port':port,'family':socket.AF_INET6 if ipaddress.ip_address(ip).version==6 else socket.AF_INET,'proto':0,'flags':socket.AI_NUMERICHOST} for ip in values]
+    async def close(self):pass
+
+class Downloader:
+    def __init__(self,relay,*,load_policy=DestinationPolicy.load):self.relay=relay;self.load_policy=load_policy
+    async def fetch(self,value,*,check_alive=lambda:None):
+        if not isinstance(value,str) or len(value)>8192:raise PolicyDenied('Invalid download URL')
+        try:url=URL(value)
+        except ValueError:raise PolicyDenied('Invalid download URL') from None
+        domains=[]
+        for step in range(MAX_REDIRECTS+1):
+            check_alive()
+            if url.scheme not in ('http','https') or not url.host or url.user is not None or url.password is not None or url.fragment:
+                raise PolicyDenied('Use an HTTP or HTTPS URL without credentials or a fragment')
+            policy=self.load_policy(self.relay.policy_path);port=url.port
+            name=policy.check_hostname(url.host,port);domains.append(name)
+            resolver=CheckedResolver(policy,self.relay.resolver,self.relay.network_check)
+            connector=TCPConnector(resolver=resolver,use_dns_cache=False,force_close=True,limit=1)
+            timeout=ClientTimeout(total=60,connect=10,sock_read=15)
+            async with ClientSession(connector=connector,timeout=timeout,trust_env=False,auto_decompress=False) as session:
+                async with session.get(url,allow_redirects=False,headers={hdrs.ACCEPT_ENCODING:'identity'}) as response:
+                    if response.status in (301,302,303,307,308):
+                        if step==MAX_REDIRECTS:raise PolicyDenied('Too many download redirects')
+                        target=response.headers.get('Location')
+                        if not target or len(target)>8192:raise PolicyDenied('Invalid download redirect')
+                        try:url=url.join(URL(target))
+                        except ValueError:raise PolicyDenied('Invalid download redirect') from None
+                        continue
+                    if response.status!=200:raise PolicyDenied('Download server returned HTTP '+str(response.status))
+                    if response.headers.get('Content-Encoding','identity').lower() not in ('','identity'):
+                        raise PolicyDenied('Compressed download response is not supported')
+                    if response.content_length is not None and response.content_length>MAX_DOWNLOAD:raise PolicyDenied('Download is larger than 8 MiB')
+                    content=bytearray()
+                    async for chunk in response.content.iter_chunked(65536):
+                        check_alive()
+                        for ip in resolver.allowed:self.relay.network_check(ip)
+                        if len(content)+len(chunk)>MAX_DOWNLOAD:raise PolicyDenied('Download is larger than 8 MiB')
+                        content.extend(chunk)
+                    filename=response.content_disposition.filename if response.content_disposition else None
+                    if not filename:filename=PurePosixPath(url.path).name or 'download'
+                    return {'data':bytes(content),'filename':filename,'domains':domains}
+        raise PolicyDenied('Too many redirects')
