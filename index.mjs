@@ -25,11 +25,12 @@ export function mount(host) {
   }
   const go=make('button','','Go');go.type='submit';go.disabled=true;
   form.append(address,go);toolbar.insertBefore(form,buttons.home);
-  const warning=make('div','warn','Experimental Gecko/WASM · private, temporary profile · no security guarantee · no audio/GPU bridge yet · Ctrl+` focuses address');
+  const licenses=make('a','','Licenses & source');licenses.href='/browser-sources/';licenses.target='_blank';licenses.rel='noopener noreferrer';toolbar.append(licenses);
+  const warning=make('div','warn','Experimental browser · temporary profile · audio is not available yet');
   const stage=make('div','stage'),canvas=make('canvas'),info=make('div','info');
   canvas.width=config.width;canvas.height=config.height;canvas.tabIndex=0;canvas.setAttribute('aria-label','Independent browser viewport');
   info.textContent='Preparing browser…';stage.append(canvas,info);
-  const status=make('div','status','Not yet tested in the target desktop.'),details=make('details');
+  const status=make('div','status','Preparing browser…'),details=make('details');
   details.append(make('summary','','Diagnostics'));const logs=make('pre','details');details.append(logs);
   const picker=make('input');picker.type='file';picker.accept='.html,.htm,text/html';picker.hidden=true;
   const keyboard=make('textarea','mobile-keyboard');keyboard.setAttribute('aria-label','Website keyboard input');keyboard.autocapitalize='off';keyboard.autocomplete='off';keyboard.spellcheck=false;
@@ -44,7 +45,7 @@ export function mount(host) {
   const current=(s,g)=>!disposed&&instance===s&&generation===g;
   async function operation(type,payload={}) {
     const s=instance,g=generation;if(!s||s.state!=='ready')return;
-    try{await s.request(type,payload);if(current(s,g)&&type!=='control')setStatus('Navigation dispatched. Page compatibility is unverified.');}
+    try{await s.request(type,payload);if(current(s,g)&&type!=='control')setStatus('Loading…');}
     catch(e){if(current(s,g))report(e);}
   }
   function applySize(){
@@ -56,9 +57,9 @@ export function mount(host) {
   async function start(){
     if(disposed)return;const g=++generation;
     runAbort?.abort();instance?.dispose();relay?.close();relay=null;setControls(false);info.hidden=false;
-    info.textContent='Starting independent Gecko/WASM. The engine must first be built and staged locally.';
+    info.textContent='Starting browser…';
     if(!globalThis.crossOriginIsolated||typeof SharedArrayBuffer==='undefined') {
-      info.textContent='Missing cross-origin isolation. This engine needs SharedArrayBuffer/pthreads.\n\nIntegrator: review COOP/COEP against the existing desktop before changing headers. See docs/AGENT_HANDOFF.md.\n\nNo iframe or remote-rendering fallback will be used.';return;
+      info.textContent='The browser could not start because this page is missing required isolation. Please contact the site administrator.';return;
     }
     let endpoint;
     try{
@@ -104,7 +105,7 @@ export function mount(host) {
       s.notify('visibility',{visible:seen&&!doc.hidden});
       applySize();
       await s.request('open-html',{html:HOME_HTML});
-      if(current(s,g))setStatus(endpoint?'Ready for testing. Network traffic uses the configured relay.':'Offline test mode. Open HTML works without a relay; public websites do not.');
+      if(current(s,g))setStatus(endpoint?'Ready':'Offline: websites are unavailable. You can still open an HTML file.');
     }catch(e){if(current(s,g)){setControls(false);info.hidden=false;info.textContent=textError(e);report(e);s.dispose();}}
   }
   root.addEventListener('keydown',e=>{
