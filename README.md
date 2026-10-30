@@ -148,3 +148,7 @@ relay, a general website compatibility test, or proof of TLS behavior. There is
 no live endpoint until the registered-account authorization, trusted source IP,
 service isolation, optional audit key custody, and policy deployment are
 implemented and tested.
+
+IP-range and country controls are independent of the domain lists. Their
+source template and rollout notes are in `active-system/network_policy/README.md`.
+They are not yet installed across the live login and egress services.

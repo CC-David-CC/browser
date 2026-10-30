@@ -19,11 +19,12 @@ CONNECT_TIMEOUT = 10
 IDLE_TIMEOUT = 120
 
 class Relay:
-    def __init__(self, *, policy_path, origin, authenticate, source, audit=None, resolver=None, connector=None):
-        if not callable(authenticate) or not callable(source):
-            raise ValueError('Authenticated identity and trusted source callbacks are required')
+    def __init__(self, *, policy_path, origin, authenticate, source, network_check, audit=None, resolver=None, connector=None):
+        if not callable(authenticate) or not callable(source) or not callable(network_check):
+            raise ValueError('Authenticated identity, trusted source and outbound access check are required')
         self.policy_path, self.origin = policy_path, origin
         self.authenticate, self.source = authenticate, source
+        self.network_check=network_check
         self.resolver = resolver or self._resolve
         self.connector = connector or self._connect
         self.users = {}
@@ -77,20 +78,22 @@ class Relay:
                 while True:
                     data = await asyncio.wait_for(entry['reader'].read(MAX_FRAME), IDLE_TIMEOUT)
                     if not data: break
+                    self.network_check(entry['address'])
                     entry['received'] += len(data)
                     await packet(2,stream_id,data)
-            except (OSError,asyncio.TimeoutError): pass
+            except Exception: pass
             finally: await finish(stream_id)
         async def pump_in(stream_id, entry):
             try:
                 while True:
                     data = await asyncio.wait_for(entry['queue'].get(), IDLE_TIMEOUT)
                     entry['queued'] -= len(data)
+                    self.network_check(entry['address'])
                     entry['writer'].write(data)
                     await asyncio.wait_for(entry['writer'].drain(), IDLE_TIMEOUT)
                     entry['sent'] += len(data)
                     await packet(3,stream_id,struct.pack('<I',WINDOW-entry['queue'].qsize()))
-            except (OSError,asyncio.TimeoutError):
+            except Exception:
                 await finish(stream_id,3)
         async def connect(stream_id, payload):
             if stream_id == 0 or stream_id in streams or len(payload)<4 or payload[0]!=1:
@@ -104,6 +107,7 @@ class Relay:
                 if self.users.get(principal.sub,0)>=policy.max_connections_per_user:raise PolicyDenied('Connection limit')
                 self.users[principal.sub]=self.users.get(principal.sub,0)+1;reserved=True
                 addresses=policy.check_addresses(await asyncio.wait_for(self.resolver(name,port),CONNECT_TIMEOUT))
+                for address in addresses:self.network_check(address)
                 reader,writer=await asyncio.wait_for(self.connector(addresses[0],port),CONNECT_TIMEOUT)
             except Exception:
                 if reserved:
@@ -117,7 +121,7 @@ class Relay:
                     self.users[principal.sub]-=1
                     if not self.users[principal.sub]:del self.users[principal.sub]
                 raise
-            entry={'name':name,'port':port,'reader':reader,'writer':writer,'queue':asyncio.Queue(maxsize=WINDOW),'queued':0,'sent':0,'received':0,'tasks':[]}
+            entry={'name':name,'port':port,'address':addresses[0],'reader':reader,'writer':writer,'queue':asyncio.Queue(maxsize=WINDOW),'queued':0,'sent':0,'received':0,'tasks':[]}
             streams[stream_id]=entry
             try:self.audit({'subject':principal.sub,'source':peer,'destination':name,'port':port,'event':'opened'})
             except Exception:

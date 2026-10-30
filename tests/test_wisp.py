@@ -23,7 +23,7 @@ class WispRelayTests(unittest.IsolatedAsyncioTestCase):
         async def resolve(name,port):self.calls.append(name);return ['1.1.1.1']
         async def connect(ip,port):self.connections.append((ip,port));return await asyncio.open_connection('127.0.0.1',self.echo_port)
         policy=Path(__file__).resolve().parents[1]/'relay/policy.json'
-        self.relay=Relay(policy_path=policy,origin='http://127.0.0.1',authenticate=authenticate,source=lambda r:'127.0.0.1',audit=self.audit.append,resolver=resolve,connector=connect)
+        self.relay=Relay(policy_path=policy,origin='http://127.0.0.1',authenticate=authenticate,source=lambda r:'127.0.0.1',network_check=lambda ip:None,audit=self.audit.append,resolver=resolve,connector=connect)
         app=web.Application();app.router.add_get('/wisp/',self.relay.handle);self.runner=web.AppRunner(app);await self.runner.setup();site=web.TCPSite(self.runner,'127.0.0.1',0);await site.start();self.port=site._server.sockets[0].getsockname()[1]
         self.client=ClientSession()
 
@@ -53,5 +53,30 @@ class WispRelayTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(self.calls,['grainger.com']);self.assertEqual(self.connections,[('1.1.1.1',443)])
         self.assertFalse(self.relay.users)
         self.assertEqual(self.audit,[], 'Server audit must stay off by default')
+
+    async def test_shared_outgoing_ip_block_is_checked_before_connect(self):
+        def deny(ip):raise ValueError('blocked')
+        self.relay.network_check=deny
+        url=f'http://127.0.0.1:{self.port}/wisp/'
+        async with self.client.ws_connect(url,headers={'Origin':'http://127.0.0.1','X-Test-Auth':'registered'}) as ws:
+            await self.read(ws)
+            await ws.send_bytes(self.pkt(1,4,bytes([1])+struct.pack('<H',443)+b'grainger.com'))
+            self.assertEqual((await self.read(ws))[0],(4,4))
+            self.assertEqual(self.calls,['grainger.com']);self.assertEqual(self.connections,[])
+
+    async def test_new_outgoing_block_stops_an_existing_stream(self):
+        state={'blocked':False}
+        def check(ip):
+            if state['blocked']:raise ValueError('blocked')
+        self.relay.network_check=check
+        url=f'http://127.0.0.1:{self.port}/wisp/'
+        async with self.client.ws_connect(url,headers={'Origin':'http://127.0.0.1','X-Test-Auth':'registered'}) as ws:
+            await self.read(ws)
+            await ws.send_bytes(self.pkt(1,2,bytes([1])+struct.pack('<H',443)+b'grainger.com'))
+            await ws.send_bytes(self.pkt(2,2,b'before'))
+            first=[await self.read(ws),await self.read(ws)];self.assertIn(((2,2),b'before'),first)
+            state['blocked']=True
+            await ws.send_bytes(self.pkt(2,2,b'after'))
+            self.assertEqual((await self.read(ws))[0],(4,2))
 
 if __name__=='__main__':unittest.main()
