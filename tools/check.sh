@@ -7,7 +7,7 @@ for file in index.mjs config.mjs src/*.mjs src/*.js demo/*.mjs tools/*.cjs tests
 for file in tools/*.sh; do bash -n "$file"; done
 python3 - <<'PY'
 from pathlib import Path
-for root in ('tools','tests'):
+for root in ('tools','tests','relay'):
     for p in Path(root).glob('*.py'):compile(p.read_text(),str(p),'exec')
 PY
 node --test tests/*.test.mjs

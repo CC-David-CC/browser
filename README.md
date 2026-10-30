@@ -105,3 +105,46 @@ The desktop implementation can open selected `.html`/`.htm` files from My
 files as well as upload a local HTML file. It copies the selected document to
 the temporary guest profile; sibling files, browser downloads to My files and
 persistent browser profiles are not implemented yet.
+
+## Domain usage records
+
+The Browser app is designed to record requested destination domains locally by
+account when its relay is connected. Records contain a domain and device time,
+not page URLs, paths, messages or content. The device uses a non-exportable
+Web Crypto signing key and a hash chain; multiple tabs serialize updates with
+Web Locks. A separately saved head hash detects missing or changed records.
+Clearing the browser's site data removes the records and key. The private key
+never leaves the browser. There is currently no implemented request/report
+transport, account binding for a device signing key, or administrator UI, so
+reports cannot yet be requested or combined across devices. A signature shows
+that a particular key signed a report; it does not prove a person visited a
+site, that the device clock was accurate, or that a user-controlled client
+reported every request.
+
+The operator's independent server ledger is controlled by
+`serverAuditEnabled` in `relay/policy.json` and is **false by default**. The
+ledger code can sign a hash chain of authenticated connection metadata and
+produce per-account or all-account domain summaries from the same events. It
+has not been installed or connected to the relay. An operator must provision a
+separately protected Ed25519 signing key and save signed checkpoints outside
+the database to detect deletion or rewriting of the tail. The signed times
+are the server's clock, not independently certified timestamps. No page
+content or message body belongs in these records.
+
+The experimental relay code requires `aiohttp` and `cryptography`; use the
+project's Python environment when running `tools/check.sh`. Its current tests
+use a fixture authenticator, not the production account system. Production
+must supply real registered-session authentication, trustworthy client IP
+attribution, isolated service configuration, and policy enforcement before any
+external Wisp endpoint is enabled.
+
+The current source-only relay prototype implements bounded Wisp v1 TCP streams,
+checks the destination policy before resolving and connects only to a vetted
+public address. Its test fixture exercised a real Gecko request through the
+relay, rejected a YouTube request before DNS lookup, and stored signed domain
+requests in the test browser. This fixture supplies a fake test identity and
+local test destination; it is **not** production authentication, a public
+relay, a general website compatibility test, or proof of TLS behavior. There is
+no live endpoint until the registered-account authorization, trusted source IP,
+service isolation, optional audit key custody, and policy deployment are
+implemented and tested.

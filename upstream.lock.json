@@ -6,5 +6,5 @@
   "reviewed_on": "2026-10-30",
   "engine_abi": "browser-gecko-mailbox-v1",
   "emscripten": "6.0.1",
-  "status": "source-inspected; no engine build or browser execution performed"
+  "status": "built; isolated Chrome offline rendering and desktop account-file opening tested; external networking not configured"
 }

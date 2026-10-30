@@ -10,6 +10,7 @@ import ipaddress
 import json
 from pathlib import Path
 import re
+import socket
 
 class PolicyDenied(ValueError):
     pass
@@ -32,6 +33,12 @@ def hostname(value):
         pass
     else:
         raise PolicyDenied('IP-literal destinations are disabled')
+    try:
+        socket.inet_aton(name)
+    except OSError:
+        pass
+    else:
+        raise PolicyDenied('IP-like destination is disabled')
     if all(label.isdigit() for label in labels):
         raise PolicyDenied('IP-like destination is disabled')
     return name
@@ -44,6 +51,7 @@ class DestinationPolicy:
     blacklist: tuple
     whitelist: tuple
     whitelist_enabled: bool
+    server_audit_enabled: bool
     tcp_ports: tuple
     max_connections_per_user: int
 
@@ -58,19 +66,19 @@ class DestinationPolicy:
                 result[key] = value
             return result
         data = json.loads(raw, object_pairs_hook=unique)
-        if not isinstance(data, dict) or set(data) != {'version', 'blacklist', 'whitelist', 'whitelistEnabled', 'tcpPorts', 'maxConnectionsPerUser'} or data['version'] != 'codi-browser-relay-policy/1':
+        if not isinstance(data, dict) or set(data) != {'version', 'blacklist', 'whitelist', 'whitelistEnabled', 'serverAuditEnabled', 'tcpPorts', 'maxConnectionsPerUser'} or data['version'] != 'codi-browser-relay-policy/1':
             raise ValueError('Invalid relay policy')
         def domains(values):
             if not isinstance(values, list) or len(values) > 4096: raise ValueError('Invalid domain list')
             out = tuple(hostname(value) for value in values)
             if len(out) != len(set(out)): raise ValueError('Duplicate policy domain')
             return out
-        if type(data['whitelistEnabled']) is not bool: raise ValueError('Invalid whitelist switch')
+        if type(data['whitelistEnabled']) is not bool or type(data['serverAuditEnabled']) is not bool: raise ValueError('Invalid policy switch')
         ports = data['tcpPorts']
         if not isinstance(ports, list) or not ports or len(ports) > 16 or any(type(p) is not int or not 1 <= p <= 65535 for p in ports) or len(set(ports)) != len(ports): raise ValueError('Invalid port policy')
         limit = data['maxConnectionsPerUser']
         if type(limit) is not int or not 1 <= limit <= 128: raise ValueError('Invalid connection limit')
-        return cls(domains(data['blacklist']), domains(data['whitelist']), data['whitelistEnabled'], tuple(ports), limit)
+        return cls(domains(data['blacklist']), domains(data['whitelist']), data['whitelistEnabled'], data['serverAuditEnabled'], tuple(ports), limit)
 
     def check_hostname(self, raw, port):
         name = hostname(raw)

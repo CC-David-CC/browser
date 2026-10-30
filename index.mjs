@@ -1,3 +1,4 @@
+import {recordDomain} from './src/domain-usage.mjs';
 import {config} from './config.mjs';
 import {BrowserSession} from './src/session.mjs';
 import {normalizeNavigation,boundedSize,relayURL,textError} from './src/policy.mjs';
@@ -9,6 +10,7 @@ import {styles} from './src/styles.mjs';
 export function mount(host) {
   const body=host.ui.make('div','window-content');
   const doc=body.ownerDocument;
+  const usageOwner=host.storage?.signedInSubject?.();
   body.style.cssText='height:100%;min-height:0;display:flex;flex-direction:column;';
   // Shadow DOM scopes OUR chrome styles only. It does not render guest content
   // and is not claimed as a security boundary.
@@ -75,6 +77,8 @@ export function mount(host) {
             info.hidden=true;
           }catch(e){report(e);s.fail(e);}
           finally{s.notify('frame-ack',{seq:m.seq});}
+        }else if(m.type==='domain-use'){
+          if(usageOwner&&host.storage?.signedInSubject?.()===usageOwner)void recordDomain(usageOwner,m.hostname).catch(error=>log('Domain usage could not be saved on this device: '+textError(error)));
         }else if(m.type==='navigation'){
           // Native nsIWebNavigation status, not a page-controlled JS location hook.
           if(root.activeElement!==address)address.value=m.url;

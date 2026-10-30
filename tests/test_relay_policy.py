@@ -39,7 +39,7 @@ class BrowserRelayPolicyTests(unittest.TestCase):
             with self.subTest(addresses=addresses), self.assertRaises(module.PolicyDenied): self.policy.check_addresses(addresses)
 
     def test_invalid_hosts_and_ports_fail_closed(self):
-        for name in ['127.0.0.1', '[::1]', 'localhost', 'evil.example.com@youtube.com', 'foo..example.com', ' bad.example.com', '2130706433']:
+        for name in ['127.0.0.1', '0x08.0x08.0x08.0x08', '8.8.2056', '[::1]', 'localhost', 'evil.example.com@youtube.com', 'foo..example.com', ' bad.example.com', '2130706433']:
             with self.subTest(name=name), self.assertRaises(module.PolicyDenied): self.policy.check_hostname(name, 443)
         with self.assertRaises(module.PolicyDenied): self.policy.check_hostname('grainger.com', 22)
 

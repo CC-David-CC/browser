@@ -62,7 +62,14 @@ async function init(payload){
     Connection=class extends client.ClientConnection {
       constructor(url,...rest){
         if(url!==config.wispURL)throw new Error('Unexpected relay URL.');
-        super(url,...rest);connections.add(this);
+        // The controlled relay implements TCP-only Wisp v1; avoid automatic
+        // protocol fallback and its extra connection attempt.
+        super(url,{...(rest[0]||{}),wisp_version:1});connections.add(this);
+      }
+      create_stream(hostname,port,...rest){
+        const stream=super.create_stream(hostname,port,...rest);
+        event('domain-use',{hostname});
+        return stream;
       }
     };
   }

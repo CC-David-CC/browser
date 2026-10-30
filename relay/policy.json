@@ -14,6 +14,7 @@
     "grainger.com", "mcmaster.com", "fastenal.com", "mscdirect.com", "zoro.com",
     "digikey.com", "mouser.com", "automationdirect.com", "sparkfun.com", "adafruit.com"
   ],
+  "serverAuditEnabled": false,
   "tcpPorts": [80, 443],
   "maxConnectionsPerUser": 64
 }
