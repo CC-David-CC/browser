@@ -43,7 +43,8 @@ From this directory, with the prerequisites available on `PATH`:
 bash tools/check.sh
 python3 tools/fetch_engine.py --into /path/to/build/firefox-wasm
 python3 tools/patch_engine.py /path/to/build/firefox-wasm
-git -C /path/to/build/firefox-wasm diff  # Review the patch before building.
+git -C /path/to/build/firefox-wasm status --short
+git -C /path/to/build/firefox-wasm diff  # Also review gecko.js/src/embed-host.cpp.
 bash tools/build_engine.sh /path/to/build/firefox-wasm
 python3 tools/serve.py --port 8087
 ```
