@@ -77,7 +77,9 @@ export class Mailbox {
       this.assertRange(ptr,len);
       if (c.op===OP.control) {
         if (len>65536) throw new Error('Oversized engine status.');
-        return {status:JSON.parse(decoder.decode(this.bytes.subarray(ptr,ptr+len)))};
+        // TextDecoder rejects SharedArrayBuffer-backed views in Chrome.
+        // Copy the bounded response while the native mailbox is idle.
+        return {status:JSON.parse(decoder.decode(this.bytes.slice(ptr,ptr+len)))};
       }
       const expected=width*height*4;
       if (len!==expected || !ptr) throw new Error(`Expected ${expected} BGRA bytes; engine returned ${len}.`);
