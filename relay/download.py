@@ -13,7 +13,7 @@ from aiohttp.abc import AbstractResolver
 from yarl import URL
 from .policy import DestinationPolicy, PolicyDenied
 
-MAX_DOWNLOAD=8*1024*1024
+MAX_DOWNLOAD=128*1024*1024
 MAX_REDIRECTS=5
 
 class CheckedResolver(AbstractResolver):
@@ -53,12 +53,12 @@ class Downloader:
                     if response.status!=200:raise PolicyDenied('Download server returned HTTP '+str(response.status))
                     if response.headers.get('Content-Encoding','identity').lower() not in ('','identity'):
                         raise PolicyDenied('Compressed download response is not supported')
-                    if response.content_length is not None and response.content_length>MAX_DOWNLOAD:raise PolicyDenied('Download is larger than 8 MiB')
+                    if response.content_length is not None and response.content_length>MAX_DOWNLOAD:raise PolicyDenied('Download is larger than 128 MiB')
                     content=bytearray()
                     async for chunk in response.content.iter_chunked(65536):
                         check_alive()
                         for ip in resolver.allowed:self.relay.network_check(ip)
-                        if len(content)+len(chunk)>MAX_DOWNLOAD:raise PolicyDenied('Download is larger than 8 MiB')
+                        if len(content)+len(chunk)>MAX_DOWNLOAD:raise PolicyDenied('Download is larger than 128 MiB')
                         content.extend(chunk)
                     filename=response.content_disposition.filename if response.content_disposition else None
                     if not filename:filename=PurePosixPath(url.path).name or 'download'

@@ -105,7 +105,7 @@ The desktop implementation can open selected `.html`/`.htm` files from My
 files as well as upload a local HTML file. It copies the selected document to
 the temporary guest profile; sibling files and persistent browser profiles are
 not implemented yet. The development relay also supports an explicit Download
-URL action into My files, limited to 8 MiB. That independent fetch does not
+URL action into My files, limited to 128 MiB. That independent fetch does not
 include Gecko cookies, and ordinary clicked downloads inside Gecko are not yet
 integrated. Every redirect is checked against the relay destination policy.
 

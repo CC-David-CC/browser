@@ -50,7 +50,7 @@ async function init(payload){
   config.wispURL=policy.relayURL(payload.wispURL,self.location.href);
   if(!Number.isInteger(config.framesPerSecond) || config.framesPerSecond<1 || config.framesPerSecond>30)throw new Error('Bad frame limit.');
   if(!Number.isInteger(config.commandTimeoutMs) || config.commandTimeoutMs<1000 || config.commandTimeoutMs>120000)throw new Error('Bad command timeout.');
-  if(!Number.isInteger(config.maxHTMLBytes) || config.maxHTMLBytes<1 || config.maxHTMLBytes>8388608)throw new Error('Bad input-file limit.');
+  if(!Number.isInteger(config.maxHTMLBytes) || config.maxHTMLBytes<1 || config.maxHTMLBytes>134217728)throw new Error('Bad input-file limit.');
   event('status',{message:'Loading the independent Gecko engine…'});
   const [runtime,data]=await Promise.all([verifiedBytes(assets.runtime),verifiedBytes(assets.data)]);
   const sourceURL=URL.createObjectURL(new Blob([runtime],{type:'text/javascript'}));blobURLs.push(sourceURL);
