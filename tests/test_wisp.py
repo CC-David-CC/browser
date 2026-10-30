@@ -54,6 +54,43 @@ class WispRelayTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(self.relay.users)
         self.assertEqual(self.audit,[], 'Server audit must stay off by default')
 
+    async def test_slow_connection_does_not_stall_other_streams(self):
+        release=asyncio.Event()
+        async def resolve(name,port):
+            if name=='slow.example':await release.wait()
+            return ['1.1.1.1']
+        self.relay.resolver=resolve
+        url=f'http://127.0.0.1:{self.port}/wisp/'
+        async with self.client.ws_connect(url,headers={'Origin':'http://127.0.0.1','X-Test-Auth':'registered'}) as ws:
+            await self.read(ws)
+            def dest(name):return bytes([1])+struct.pack('<H',443)+name.encode()
+            await ws.send_bytes(self.pkt(1,1,dest('slow.example')))
+            await ws.send_bytes(self.pkt(2,1,b'queued'))
+            await ws.send_bytes(self.pkt(1,2,dest('grainger.com')))
+            await ws.send_bytes(self.pkt(2,2,b'fast'))
+            fast=[await self.read(ws),await self.read(ws)]
+            self.assertIn(((2,2),b'fast'),fast)
+            release.set()
+            slow=[await self.read(ws),await self.read(ws)]
+            self.assertIn(((2,1),b'queued'),slow)
+        self.assertFalse(self.relay.users)
+
+    async def test_disconnect_cancels_slow_connection_and_releases_capacity(self):
+        started=asyncio.Event();cancelled=asyncio.Event()
+        async def resolve(name,port):
+            started.set()
+            try:await asyncio.Event().wait()
+            finally:cancelled.set()
+        self.relay.resolver=resolve
+        url=f'http://127.0.0.1:{self.port}/wisp/'
+        ws=await self.client.ws_connect(url,headers={'Origin':'http://127.0.0.1','X-Test-Auth':'registered'})
+        await self.read(ws)
+        await ws.send_bytes(self.pkt(1,1,bytes([1])+struct.pack('<H',443)+b'slow.example'))
+        await asyncio.wait_for(started.wait(),2)
+        await ws.close()
+        await asyncio.wait_for(cancelled.wait(),2)
+        self.assertFalse(self.relay.users)
+
     async def test_shared_outgoing_ip_block_is_checked_before_connect(self):
         def deny(ip):raise ValueError('blocked')
         self.relay.network_check=deny

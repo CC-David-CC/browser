@@ -55,6 +55,7 @@ class Relay:
         ws = web.WebSocketResponse(max_msg_size=MAX_FRAME+5, heartbeat=30, compress=False)
         await ws.prepare(request)
         streams = {}
+        pending = {}
         async def packet(kind, stream_id, data=b''):
             if not ws.closed: await ws.send_bytes(struct.pack('<BI', kind, stream_id)+data)
         async def finish(stream_id, reason=1):
@@ -123,6 +124,10 @@ class Relay:
                 raise
             entry={'name':name,'port':port,'address':addresses[0],'reader':reader,'writer':writer,'queue':asyncio.Queue(maxsize=WINDOW),'queued':0,'sent':0,'received':0,'tasks':[]}
             streams[stream_id]=entry
+            waiting=pending.pop(stream_id, None)
+            if waiting:
+                for data in waiting['buffer']:
+                    entry['queued'] += len(data);entry['queue'].put_nowait(data)
             try:self.audit({'subject':principal.sub,'source':peer,'destination':name,'port':port,'event':'opened'})
             except Exception:
                 await finish(stream_id,3);await ws.close(code=1011,message=b'Audit unavailable');return
@@ -136,18 +141,43 @@ class Relay:
                 kind, stream_id = struct.unpack_from('<BI',message.data)
                 payload = message.data[5:]
                 if kind==1:
-                    await connect(stream_id,payload)
+                    if stream_id==0 or stream_id in streams or stream_id in pending or len(pending)>=128:
+                        await packet(4,stream_id,b'\x03');continue
+                    waiting={'buffer':[],'queued':0,'task':None}
+                    pending[stream_id]=waiting
+                    async def connecting(sid, data, state):
+                        try:await connect(sid,data)
+                        finally:
+                            if pending.get(sid) is state:pending.pop(sid,None)
+                    waiting['task']=asyncio.create_task(connecting(stream_id,payload,waiting))
                 elif kind==2:
                     entry=streams.get(stream_id)
+                    if not entry and payload:
+                        waiting=pending.get(stream_id)
+                        if waiting:
+                            if len(waiting['buffer'])>=WINDOW or waiting['queued']+len(payload)>MAX_QUEUED_BYTES:
+                                pending.pop(stream_id,None);waiting['task'].cancel()
+                                await asyncio.gather(waiting['task'],return_exceptions=True)
+                                await packet(4,stream_id,b'\x03')
+                            else:
+                                waiting['buffer'].append(payload);waiting['queued']+=len(payload)
+                        continue
                     if not entry or not payload:continue
                     if entry['queue'].full() or entry['queued']+len(payload)>MAX_QUEUED_BYTES:
                         await finish(stream_id,3);continue
                     entry['queued'] += len(payload);entry['queue'].put_nowait(payload)
                 elif kind==4:
+                    waiting=pending.pop(stream_id,None)
+                    if waiting:
+                        waiting['task'].cancel();await asyncio.gather(waiting['task'],return_exceptions=True)
                     await finish(stream_id)
                 else: break
         finally:
             expiry.cancel()
+            tasks=[item['task'] for item in pending.values()]
+            pending.clear()
+            for task in tasks:task.cancel()
+            if tasks:await asyncio.gather(*tasks,return_exceptions=True)
             for stream_id in list(streams): await finish(stream_id)
             await ws.close()
         return ws
