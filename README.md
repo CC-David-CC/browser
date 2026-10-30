@@ -28,8 +28,9 @@ was reorganized; it is not a manifest of the current files.
 
 The source is pinned: `upstream.lock.json` records the outer Firefox-WASM
 commit, its Gecko fork commit, the Emscripten version and the adapter ABI. The
-current build targets Linux and requires Git, Python 3, Node.js, pnpm, GNU make,
-pnpm **9.12.0** (the upstream lockfile version), Rust **1.95** with `rust-src` and the `wasm32-unknown-emscripten` target, zstd,
+current build targets Linux and requires Git, Python 3, Node.js, GNU make,
+pnpm **9.12.0** (the upstream lockfile version), Rust **1.95** with `rust-src`
+and the `wasm32-unknown-emscripten` target, zstd,
 CMake, Ninja, pkg-config, a host C/C++ compiler, and the PulseAudio development
 headers. The build downloads a patched Emscripten 6.0.1 toolchain and additional
 Mozilla build dependencies. It needs substantial disk, memory and build time;
