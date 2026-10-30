@@ -1,4 +1,6 @@
 import asyncio
+import json
+import tempfile
 from pathlib import Path
 import struct
 import sys
@@ -8,6 +10,7 @@ from types import SimpleNamespace
 from aiohttp import ClientSession, WSMsgType, web
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from relay.wisp import Relay
+from relay.policy import DestinationPolicyLoader
 
 class WispRelayTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
@@ -56,6 +59,37 @@ class WispRelayTests(unittest.IsolatedAsyncioTestCase):
             await asyncio.sleep(.01)
         self.assertFalse(self.relay.users)
         self.assertEqual(self.audit,[], 'Server audit must stay off by default')
+
+    async def test_shared_stream_capacity_is_released_on_close(self):
+        self.relay.max_streams=1;url=f'http://127.0.0.1:{self.port}/wisp/'
+        headers={'Origin':'http://127.0.0.1','X-Test-Auth':'registered'}
+        async with self.client.ws_connect(url,headers=headers) as a,self.client.ws_connect(url,headers=headers) as b:
+            await self.read(a);await self.read(b);destination=bytes([1])+struct.pack('<H',443)+b'grainger.com'
+            await a.send_bytes(self.pkt(1,1,destination));await a.send_bytes(self.pkt(2,1,b'first'))
+            self.assertIn(((2,1),b'first'),[await self.read(a),await self.read(a)])
+            await b.send_bytes(self.pkt(1,1,destination));self.assertEqual((await self.read(b))[0],(4,1))
+            await a.send_bytes(self.pkt(4,1,b'\x01'));self.assertEqual((await self.read(a))[0],(4,1))
+            await b.send_bytes(self.pkt(1,2,destination));await b.send_bytes(self.pkt(2,2,b'second'))
+            self.assertIn(((2,2),b'second'),[await self.read(b),await self.read(b)])
+        for _ in range(100):
+            if not self.relay.active_streams:break
+            await asyncio.sleep(.01)
+        self.assertEqual(self.relay.active_streams,0)
+
+    async def test_falls_back_to_other_validated_address(self):
+        attempts=[]
+        async def resolve(name,port):return ['2606:4700:4700::1111','1.1.1.1']
+        async def connect(ip,port):
+            attempts.append(ip)
+            if ':' in ip:raise OSError('IPv6 unavailable')
+            return await asyncio.open_connection('127.0.0.1',self.echo_port)
+        self.relay.resolver=resolve;self.relay.connector=connect
+        url=f'http://127.0.0.1:{self.port}/wisp/'
+        async with self.client.ws_connect(url,headers={'Origin':'http://127.0.0.1','X-Test-Auth':'registered'}) as ws:
+            await self.read(ws);await ws.send_bytes(self.pkt(1,2,bytes([1])+struct.pack('<H',443)+b'grainger.com'))
+            await ws.send_bytes(self.pkt(2,2,b'fallback'))
+            self.assertIn(((2,2),b'fallback'),[await self.read(ws),await self.read(ws)])
+            self.assertEqual(attempts,['2606:4700:4700::1111','1.1.1.1'])
 
     async def test_slow_connection_does_not_stall_other_streams(self):
         release=asyncio.Event()
@@ -125,6 +159,20 @@ class WispRelayTests(unittest.IsolatedAsyncioTestCase):
             await ws.send_bytes(self.pkt(1,4,bytes([1])+struct.pack('<H',443)+b'grainger.com'))
             self.assertEqual((await self.read(ws))[0],(4,4))
             self.assertEqual(self.calls,['grainger.com']);self.assertEqual(self.connections,[])
+
+    async def test_new_domain_block_stops_an_existing_stream(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'policy.json';value=json.loads(self.relay.policy_path.read_text());path.write_text(json.dumps(value))
+            self.relay.policy_path=path;self.relay.policies=DestinationPolicyLoader(path)
+            url=f'http://127.0.0.1:{self.port}/wisp/'
+            async with self.client.ws_connect(url,headers={'Origin':'http://127.0.0.1','X-Test-Auth':'registered'}) as ws:
+                await self.read(ws)
+                await ws.send_bytes(self.pkt(1,2,bytes([1])+struct.pack('<H',443)+b'grainger.com'))
+                await ws.send_bytes(self.pkt(2,2,b'before'))
+                self.assertIn(((2,2),b'before'),[await self.read(ws),await self.read(ws)])
+                value['blacklist'].append('grainger.com');new=path.with_suffix('.new');new.write_text(json.dumps(value));new.replace(path)
+                await ws.send_bytes(self.pkt(2,2,b'after'))
+                self.assertEqual((await self.read(ws))[0],(4,2))
 
     async def test_new_outgoing_block_stops_an_existing_stream(self):
         state={'blocked':False}

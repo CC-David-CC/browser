@@ -35,7 +35,8 @@ class DownloadTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_download_and_redirect_are_checked(self):
         result=await self.download.fetch(self.base+'/redirect')
-        self.assertEqual(result['data'],b'fixture\x00data');self.assertEqual(result['filename'],'report.bin')
+        try:self.assertEqual(result['file'].read(),b'fixture\x00data');self.assertEqual(result['bytes'],len(b'fixture\x00data'));self.assertEqual(result['filename'],'report.bin')
+        finally:result['file'].close()
         self.assertEqual(result['domains'],['allowed.example','allowed.example'])
         self.assertEqual(self.calls,['allowed.example','allowed.example'])
         with self.assertRaises(PolicyDenied):await self.download.fetch(self.base+'/blocked')

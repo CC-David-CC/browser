@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 import re
 import socket
+import threading
 
 class PolicyDenied(ValueError):
     pass
@@ -99,3 +100,19 @@ class DestinationPolicy:
                 raise PolicyDenied('Non-public resolved address')
             result.append(str(address))
         return tuple(dict.fromkeys(result))
+
+
+class DestinationPolicyLoader:
+    """Atomically reload a changed operator policy and reject invalid updates."""
+    def __init__(self,path):
+        self.path=Path(path);self.lock=threading.Lock();self.revision=None;self.value=None
+        self.current()
+    def current(self):
+        with self.lock:
+            if self.path.is_symlink():raise ValueError('Linked relay policy refused')
+            st=self.path.stat();revision=(st.st_dev,st.st_ino,st.st_size,st.st_mtime_ns)
+            if revision!=self.revision:
+                value=DestinationPolicy.load(self.path);after=self.path.stat()
+                if revision!=(after.st_dev,after.st_ino,after.st_size,after.st_mtime_ns):raise ValueError('Relay policy changed during read')
+                self.value=value;self.revision=revision
+            return self.value

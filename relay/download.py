@@ -7,6 +7,7 @@ fresh policy and DNS check, and the connector receives only validated addresses.
 import asyncio
 import ipaddress
 import socket
+import tempfile
 from pathlib import PurePosixPath
 from aiohttp import ClientSession, ClientTimeout, TCPConnector, hdrs
 from aiohttp.abc import AbstractResolver
@@ -15,6 +16,13 @@ from .policy import DestinationPolicy, PolicyDenied
 
 MAX_DOWNLOAD=128*1024*1024
 MAX_REDIRECTS=5
+
+async def disk_io(function,*args):
+    task=asyncio.create_task(asyncio.to_thread(function,*args))
+    try:return await asyncio.shield(task)
+    except asyncio.CancelledError:
+        try:await task
+        finally:raise
 
 class CheckedResolver(AbstractResolver):
     def __init__(self,policy,resolver,check):self.policy=policy;self.resolver=resolver;self.check=check;self.allowed=[]
@@ -54,13 +62,23 @@ class Downloader:
                     if response.headers.get('Content-Encoding','identity').lower() not in ('','identity'):
                         raise PolicyDenied('Compressed download response is not supported')
                     if response.content_length is not None and response.content_length>MAX_DOWNLOAD:raise PolicyDenied('Download is larger than 128 MiB')
-                    content=bytearray()
-                    async for chunk in response.content.iter_chunked(65536):
-                        check_alive()
-                        for ip in resolver.allowed:self.relay.network_check(ip)
-                        if len(content)+len(chunk)>MAX_DOWNLOAD:raise PolicyDenied('Download is larger than 128 MiB')
-                        content.extend(chunk)
-                    filename=response.content_disposition.filename if response.content_disposition else None
-                    if not filename:filename=PurePosixPath(url.path).name or 'download'
-                    return {'data':bytes(content),'filename':filename,'domains':domains}
+                    # Keep large downloads on private temporary disk rather than
+                    # accumulating a copy in the relay's memory. The caller owns
+                    # and must close the unlinked temporary file.
+                    content=tempfile.TemporaryFile(mode='w+b');size=0
+                    try:
+                        async for chunk in response.content.iter_chunked(65536):
+                            check_alive()
+                            for ip in resolver.allowed:
+                                if hasattr(self.relay,'check_stream'):self.relay.check_stream(name,port,ip)
+                                else:self.relay.network_check(ip)
+                            size+=len(chunk)
+                            if size>MAX_DOWNLOAD:raise PolicyDenied('Download is larger than 128 MiB')
+                            await disk_io(content.write,chunk)
+                        await disk_io(content.seek,0)
+                        filename=response.content_disposition.filename if response.content_disposition else None
+                        if not filename:filename=PurePosixPath(url.path).name or 'download'
+                        return {'file':content,'bytes':size,'filename':filename,'domains':domains,'target':(name,port,tuple(resolver.allowed))}
+                    except BaseException:
+                        content.close();raise
         raise PolicyDenied('Too many redirects')

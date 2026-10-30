@@ -10,7 +10,7 @@ import socket
 import struct
 import time
 from aiohttp import web, WSMsgType
-from .policy import DestinationPolicy, PolicyDenied
+from .policy import DestinationPolicyLoader, PolicyDenied
 
 MAX_FRAME = 65536
 WINDOW = 8
@@ -19,7 +19,7 @@ CONNECT_TIMEOUT = 10
 IDLE_TIMEOUT = 120
 
 class Relay:
-    def __init__(self, *, policy_path, origin, authenticate, source, network_check, audit=None, resolver=None, connector=None):
+    def __init__(self, *, policy_path, origin, authenticate, source, network_check, audit=None, resolver=None, connector=None, max_streams=1024):
         if not callable(authenticate) or not callable(source) or not callable(network_check):
             raise ValueError('Authenticated identity, trusted source and outbound access check are required')
         self.policy_path, self.origin = policy_path, origin
@@ -27,12 +27,18 @@ class Relay:
         self.network_check=network_check
         self.resolver = resolver or self._resolve
         self.connector = connector or self._connect
-        self.users = {}
+        if type(max_streams) is not int or not 1<=max_streams<=4096:raise ValueError('Bounded shared stream capacity required')
+        self.users = {};self.active_streams=0;self.max_streams=max_streams
         # Fail early for invalid configuration; re-read for each new stream.
-        policy=DestinationPolicy.load(policy_path)
+        self.policies=DestinationPolicyLoader(policy_path);policy=self.policies.current()
         if policy.server_audit_enabled and not callable(audit):raise ValueError('Enabled server audit needs a protected ledger')
         self.audit_enabled=policy.server_audit_enabled
         self.audit=audit if self.audit_enabled else lambda _event:None
+
+    def check_stream(self,name,port,address):
+        policy=self.policies.current()
+        if policy.server_audit_enabled!=self.audit_enabled:raise PolicyDenied('Audit mode changed; restart relay')
+        policy.check_hostname(name,port);self.network_check(address)
 
     async def _resolve(self, name, port):
         loop = asyncio.get_running_loop()
@@ -61,7 +67,7 @@ class Relay:
         async def finish(stream_id, reason=1):
             entry = streams.pop(stream_id, None)
             if not entry: return
-            self.users[principal.sub] -= 1
+            self.users[principal.sub] -= 1;self.active_streams -= 1
             if not self.users[principal.sub]: del self.users[principal.sub]
             others=[task for task in entry['tasks'] if task is not asyncio.current_task()]
             for task in others:task.cancel()
@@ -79,7 +85,7 @@ class Relay:
                 while True:
                     data = await asyncio.wait_for(entry['reader'].read(MAX_FRAME), IDLE_TIMEOUT)
                     if not data: break
-                    self.network_check(entry['address'])
+                    self.check_stream(entry['name'],entry['port'],entry['address'])
                     entry['received'] += len(data)
                     await packet(2,stream_id,data)
             except Exception: pass
@@ -89,7 +95,7 @@ class Relay:
                 while True:
                     data = await asyncio.wait_for(entry['queue'].get(), IDLE_TIMEOUT)
                     entry['queued'] -= len(data)
-                    self.network_check(entry['address'])
+                    self.check_stream(entry['name'],entry['port'],entry['address'])
                     entry['writer'].write(data)
                     await asyncio.wait_for(entry['writer'].drain(), IDLE_TIMEOUT)
                     entry['sent'] += len(data)
@@ -102,27 +108,37 @@ class Relay:
             port=struct.unpack_from('<H',payload,1)[0]
             reserved=False
             try:
-                raw=payload[3:].decode('utf-8','strict');policy=DestinationPolicy.load(self.policy_path)
+                raw=payload[3:].decode('utf-8','strict');policy=self.policies.current()
                 if policy.server_audit_enabled!=self.audit_enabled:raise PolicyDenied('Audit mode changed; restart relay')
                 name=policy.check_hostname(raw,port)
-                if self.users.get(principal.sub,0)>=policy.max_connections_per_user:raise PolicyDenied('Connection limit')
-                self.users[principal.sub]=self.users.get(principal.sub,0)+1;reserved=True
+                if self.users.get(principal.sub,0)>=policy.max_connections_per_user or self.active_streams>=self.max_streams:raise PolicyDenied('Connection limit')
+                self.users[principal.sub]=self.users.get(principal.sub,0)+1;self.active_streams+=1;reserved=True
                 addresses=policy.check_addresses(await asyncio.wait_for(self.resolver(name,port),CONNECT_TIMEOUT))
+                if len(addresses)>32:raise PolicyDenied('Too many resolved addresses')
                 for address in addresses:self.network_check(address)
-                reader,writer=await asyncio.wait_for(self.connector(addresses[0],port),CONNECT_TIMEOUT)
+                # Some hosts publish IPv6 even when this relay has no IPv6 route.
+                # Try each already-vetted address with a bounded total deadline;
+                # never ask DNS again during connection establishment.
+                async with asyncio.timeout(CONNECT_TIMEOUT):
+                    for address in addresses:
+                        try:
+                            reader,writer=await asyncio.wait_for(self.connector(address,port),3)
+                            break
+                        except (OSError,TimeoutError):continue
+                    else:raise OSError('No validated address was reachable')
             except Exception:
                 if reserved:
-                    self.users[principal.sub]-=1
+                    self.users[principal.sub]-=1;self.active_streams-=1
                     if not self.users[principal.sub]:del self.users[principal.sub]
                 try:self.audit({'subject':principal.sub,'source':peer,'destination':raw if 'raw' in locals() else '', 'port':port,'event':'denied'})
                 except Exception:await ws.close(code=1011,message=b'Audit unavailable');return
                 await packet(4,stream_id,b'\x03');return
             except asyncio.CancelledError:
                 if reserved:
-                    self.users[principal.sub]-=1
+                    self.users[principal.sub]-=1;self.active_streams-=1
                     if not self.users[principal.sub]:del self.users[principal.sub]
                 raise
-            entry={'name':name,'port':port,'address':addresses[0],'reader':reader,'writer':writer,'queue':asyncio.Queue(maxsize=WINDOW),'queued':0,'sent':0,'received':0,'tasks':[]}
+            entry={'name':name,'port':port,'address':address,'reader':reader,'writer':writer,'queue':asyncio.Queue(maxsize=WINDOW),'queued':0,'sent':0,'received':0,'tasks':[]}
             streams[stream_id]=entry
             waiting=pending.pop(stream_id, None)
             if waiting:
