@@ -46,5 +46,14 @@ export async function openBrowserRelay(config,session,{valid=()=>true,onFailure=
   if(!valid()){closed=true;throw Error('Account changed; reopen Browser.');}
   timer=setTimeout(renew,12000);
   const url=new URL(root+'/wisp/',location.origin);url.protocol=url.protocol==='https:'?'wss:':'ws:';
-  return {url:url.href,close(){if(closed)return;closed=true;clearTimeout(timer);void post(root+'/close',{}).catch(()=>{});}};
+  return {url:url.href,async download(source){
+    check();requireThat(!closed,'Browser networking has disconnected.');
+    const response=await fetch(root+'/download',{method:'POST',mode:'same-origin',credentials:'same-origin',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:source}),signal:AbortSignal.timeout(65000)});
+    if(!response.ok){let result;try{result=await response.json();}catch{}throw Error(result?.error||'Download failed ('+response.status+').');}
+    const reader=response.body.getReader(),chunks=[];let size=0;
+    try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>8*1024*1024)throw Error('Download is larger than 8 MiB.');chunks.push(value);}}
+    catch(error){await reader.cancel().catch(()=>{});throw error;}
+    check();const data=new Uint8Array(size);let at=0;for(const chunk of chunks){data.set(chunk,at);at+=chunk.length;}
+    return {data,domains:(response.headers.get('X-Codi-Domain-Requests')||'').split(',').filter(Boolean)};
+  },close(){if(closed)return;closed=true;clearTimeout(timer);void post(root+'/close',{}).catch(()=>{});}};
 }
