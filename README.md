@@ -9,8 +9,10 @@ profile; closing or resetting it discards that profile.
 Chrome harness. An offline HTML test page rendered, ran JavaScript, accepted
 mouse and keyboard input, and two engine windows ran independently. It is integrated into an isolated local desktop test, but is not on the live
 site. Public website access also needs an
-authenticated, policy-controlled Wisp relay; none is configured. It is not
-ready for sensitive browsing or untrusted users.
+authenticated, policy-controlled Wisp relay. That backend is now live and
+has passed registered-account admission and basic policy checks, but the
+Browser app and engine are not yet deployed. It is not ready for sensitive
+browsing or untrusted users.
 
 The regular app builder packages the entry and worker support declared in
 `app.json`. A usable build also needs the actual engine assets and corresponding
@@ -100,8 +102,8 @@ exact vetted public address, so redirects, DNS changes and page subrequests do
 not bypass a one-time address-bar check. IP literals and private/loopback
 addresses are denied. Domain lists require maintenance and cannot guarantee
 blocking content rehosted on unrelated domains or accessed through other
-proxies. **There is no active Wisp relay yet, so this policy is not yet
-network enforcement.**
+proxies. The separate root-owned live policy is enforced by the Browser relay;
+this source file is its starting template, not the active operator copy.
 
 The desktop implementation can open selected `.html`/`.htm` files from My
 files as well as upload a local HTML file. It copies the selected document to
@@ -137,12 +139,11 @@ the database to detect deletion or rewriting of the tail. The signed times
 are the server's clock, not independently certified timestamps. No page
 content or message body belongs in these records.
 
-The experimental relay code requires `aiohttp` and `cryptography`; use the
-project's Python environment when running `tools/check.sh`. Its current tests
-use a fixture authenticator, not the production account system. Production
-must supply real registered-session authentication, trustworthy client IP
-attribution, isolated service configuration, and policy enforcement before any
-external Wisp endpoint is enabled.
+The relay uses `aiohttp` and `cryptography` in an isolated environment. A live
+test registered a disposable account, obtained a signed relay grant, fetched
+an allowed HTTPS page, rejected a blacklisted domain and private addresses,
+opened a Wisp connection, then removed the test account. Broader site
+compatibility and real phone use remain to be verified.
 
 The current source-only relay prototype implements bounded Wisp v1 TCP streams,
 checks the destination policy before resolving and connects only to a vetted
@@ -150,15 +151,15 @@ public address. Its test fixture exercised a real Gecko request through the
 relay, rejected a YouTube request before DNS lookup, and stored signed domain
 requests in the test browser. That earlier fixture supplied a fake test identity and local destination. A
 later isolated desktop test used the real local issuer and rendered a public
-HTTPS page through the authenticated relay. It is not a public relay, a broad
-website compatibility test, or proof of production security. There is
-no live endpoint until the registered-account authorization, trusted source IP,
-service isolation, optional audit key custody, and policy deployment are
-implemented and tested.
+HTTPS page through the authenticated relay. The backend endpoint is now public
+and requires a registered, signed session for networking; the app itself is
+not yet live. These checks are not a broad website compatibility or security
+audit. Optional server audit remains disconnected and disabled.
 
 IP-range and country controls are independent of the domain lists. Their
 source template and rollout notes are in `active-system/network_policy/README.md`.
-They are not yet installed across the live login and egress services.
+They cover live login and Browser relay traffic; other egress paths are not
+yet covered by these shared rules.
 
 The request coordinator stores received reports only after an explicit administrator
 request; it requires a private database and a configured administrator account ID.
