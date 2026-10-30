@@ -21,6 +21,9 @@ export MOZBUILD_STATE_PATH="$SRC/.mozbuild"
 export EMSDK="$SRC/emsdk"
 export EM_CONFIG="$SRC/em_config"
 export MOZCONFIG="$SRC/mozconfig.full.emscripten"
+# make build bootstraps this directory before invoking mach, which resolves
+# the target compiler by name from PATH.
+export PATH="$EMSDK/upstream/emscripten:$PATH"
 cd "$SRC"
 pnpm install --frozen-lockfile
 # upstream make bootstraps its pinned Gecko fork + patched Emscripten 6.0.1.
