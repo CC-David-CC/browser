@@ -6,21 +6,23 @@ real client address to the Relay. It does not start a listener by itself.
 import asyncio
 import json
 import re
+import time
+from urllib.parse import quote
 from urllib.parse import urlsplit
-from aiohttp import web
+from aiohttp import ClientError, web
 from .authorization import NetworkDenied
 
 _ID=re.compile(r'[A-Za-z0-9_-]{43}\Z')
 
 class BrowserHTTP:
-    def __init__(self,sessions,relay,*,origin,base_path='',secure_cookie=True):
+    def __init__(self,sessions,relay,*,origin,base_path='',secure_cookie=True,downloader=None):
         u=urlsplit(origin)
         if not u.hostname or u.username or u.password or u.path or u.query or u.fragment or origin!=u.geturl() or (u.scheme!='https' and not (u.scheme=='http' and u.hostname=='127.0.0.1' and not secure_cookie)):
             raise ValueError('HTTPS origin or explicit loopback test origin required')
         self.sessions=sessions;self.relay=relay;self.origin=origin;self.host=u.netloc
         self.base=base_path+'/browser-relay';self.secure_cookie=secure_cookie
         self.cookie='__Secure-codi-browser' if secure_cookie else 'codi-browser-test'
-        relay.authenticate=self.authenticate
+        relay.authenticate=self.authenticate;self.downloader=downloader;self.downloads=set()
 
     def routes(self,app):
         app.router.add_post(self.base+'/challenge',self.initial)
@@ -28,6 +30,7 @@ class BrowserHTTP:
         app.router.add_post(root+'/challenge',self.challenge)
         app.router.add_post(root+'/authorize',self.authorize)
         app.router.add_post(root+'/close',self.close)
+        if self.downloader:app.router.add_post(root+'/download',self.download)
         app.router.add_get(root+'/wisp/',self.relay.handle)
 
     def headers(self,request):
@@ -97,6 +100,25 @@ class BrowserHTTP:
         response=self.response({'closed':True})
         response.del_cookie(self.cookie,path=self.base+'/connection/'+identifier+'/')
         return response
+
+    async def download(self,request):
+        body=await self.body(request,['url']);identifier=self.identifier(request)
+        try:lease=self.sessions.principal(identifier,self.secret(request))
+        except (NetworkDenied,ValueError):raise web.HTTPUnauthorized() from None
+        if identifier in self.downloads:raise web.HTTPTooManyRequests(text='One download at a time per Browser window')
+        self.downloads.add(identifier)
+        def alive():
+            if lease.deadline<=time.time():raise NetworkDenied('Browser relay session expired')
+        try:
+            result=await self.downloader.fetch(body['url'],check_alive=alive)
+            name=str(result['filename'])[:512]
+            return web.Response(body=result['data'],content_type='application/octet-stream',headers={
+                'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',
+                'X-Codi-Download-Name':quote(name,safe=''),
+                'X-Codi-Domain-Requests':','.join(result['domains'])})
+        except (ValueError,OSError,asyncio.TimeoutError,ClientError):
+            return web.json_response({'error':'Download failed or was blocked by the network policy.'},status=403,headers={'Cache-Control':'no-store'})
+        finally:self.downloads.discard(identifier)
 
     async def authenticate(self,request):
         if request.query_string or len(request.headers.getall('Host',[]))!=1 or len(request.headers.getall('Origin',[]))!=1 or request.host!=self.host or request.headers['Origin']!=self.origin:raise web.HTTPForbidden()
