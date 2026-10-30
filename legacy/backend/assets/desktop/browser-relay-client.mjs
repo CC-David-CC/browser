@@ -51,7 +51,7 @@ export async function openBrowserRelay(config,session,{valid=()=>true,onFailure=
     const response=await fetch(root+'/download',{method:'POST',mode:'same-origin',credentials:'same-origin',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:source}),signal:AbortSignal.timeout(65000)});
     if(!response.ok){let result;try{result=await response.json();}catch{}throw Error(result?.error||'Download failed ('+response.status+').');}
     const reader=response.body.getReader(),chunks=[];let size=0;
-    try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>8*1024*1024)throw Error('Download is larger than 8 MiB.');chunks.push(value);}}
+    try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>128*1024*1024)throw Error('Download is larger than 128 MiB.');chunks.push(value);}}
     catch(error){await reader.cancel().catch(()=>{});throw error;}
     check();const data=new Uint8Array(size);let at=0;for(const chunk of chunks){data.set(chunk,at);at+=chunk.length;}
     return {data,domains:(response.headers.get('X-Codi-Domain-Requests')||'').split(',').filter(Boolean)};
