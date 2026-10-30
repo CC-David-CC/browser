@@ -14,6 +14,13 @@ from .authorization import NetworkDenied
 
 _ID=re.compile(r'[A-Za-z0-9_-]{43}\Z')
 
+async def disk_io(function,*args):
+    task=asyncio.create_task(asyncio.to_thread(function,*args))
+    try:return await asyncio.shield(task)
+    except asyncio.CancelledError:
+        try:await task
+        finally:raise
+
 class BrowserHTTP:
     def __init__(self,sessions,relay,*,origin,base_path='',secure_cookie=True,downloader=None):
         u=urlsplit(origin)
@@ -22,7 +29,7 @@ class BrowserHTTP:
         self.sessions=sessions;self.relay=relay;self.origin=origin;self.host=u.netloc
         self.base=base_path+'/browser-relay';self.secure_cookie=secure_cookie
         self.cookie='__Secure-codi-browser' if secure_cookie else 'codi-browser-test'
-        relay.authenticate=self.authenticate;self.downloader=downloader;self.downloads=set()
+        relay.authenticate=self.authenticate;self.downloader=downloader;self.downloads={}
 
     def routes(self,app):
         app.router.add_post(self.base+'/challenge',self.initial)
@@ -105,20 +112,36 @@ class BrowserHTTP:
         body=await self.body(request,['url']);identifier=self.identifier(request)
         try:lease=self.sessions.principal(identifier,self.secret(request))
         except (NetworkDenied,ValueError):raise web.HTTPUnauthorized() from None
-        if identifier in self.downloads:raise web.HTTPTooManyRequests(text='One download at a time per Browser window')
-        self.downloads.add(identifier)
+        if identifier in self.downloads or len(self.downloads)>=4 or list(self.downloads.values()).count(lease.sub)>=2:
+            raise web.HTTPTooManyRequests(text='Download capacity reached; try again shortly')
+        self.downloads[identifier]=lease.sub;result=None;response=None
         def alive():
             if lease.deadline<=time.time():raise NetworkDenied('Browser relay session expired')
         try:
             result=await self.downloader.fetch(body['url'],check_alive=alive)
             name=str(result['filename'])[:512]
-            return web.Response(body=result['data'],content_type='application/octet-stream',headers={
+            response=web.StreamResponse(status=200,headers={'Content-Type':'application/octet-stream','Content-Length':str(result['bytes']),
                 'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',
                 'X-Codi-Download-Name':quote(name,safe=''),
                 'X-Codi-Domain-Requests':','.join(result['domains'])})
+            await response.prepare(request)
+            while True:
+                alive()
+                name,port,addresses=result['target']
+                for address in addresses:self.relay.check_stream(name,port,address)
+                chunk=await disk_io(result['file'].read,65536)
+                if not chunk:break
+                await response.write(chunk)
+            await response.write_eof();return response
         except (ValueError,OSError,asyncio.TimeoutError,ClientError):
+            if response is not None and response.prepared:
+                response.force_close()
+                if request.transport:request.transport.close()
+                return response
             return web.json_response({'error':'Download failed or was blocked by the network policy.'},status=403,headers={'Cache-Control':'no-store'})
-        finally:self.downloads.discard(identifier)
+        finally:
+            if result is not None:result['file'].close()
+            self.downloads.pop(identifier,None)
 
     async def authenticate(self,request):
         if request.query_string or len(request.headers.getall('Host',[]))!=1 or len(request.headers.getall('Origin',[]))!=1 or request.host!=self.host or request.headers['Origin']!=self.origin:raise web.HTTPForbidden()
