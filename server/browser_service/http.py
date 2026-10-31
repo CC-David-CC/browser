@@ -151,7 +151,13 @@ class BrowserHTTP:
         def alive():
             if lease.deadline<=time.time():raise NetworkDenied('Browser relay session expired')
         try:
-            result=await self.downloader.fetch(body['url'],check_alive=alive)
+            if getattr(self.relay,'audit_enabled',False):
+                peer=self.relay.source(request)
+                def audit_event(event,name,port,received):
+                    self.relay.audit({'subject':lease.sub,'source':peer,'destination':name,'port':port,'event':event,'receivedBytes':received})
+                result=await self.downloader.fetch(body['url'],check_alive=alive,audit_event=audit_event)
+            else:
+                result=await self.downloader.fetch(body['url'],check_alive=alive)
             name=str(result['filename'])[:512]
             response=web.StreamResponse(status=200,headers={'Content-Type':'application/octet-stream','Content-Length':str(result['bytes']),
                 'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',
