@@ -376,3 +376,9 @@ It includes the application source and an `engine-build/` directory containing
 the native wrapper patch, added native file, and actual candidate link driver.
 It supplements the pinned Firefox-WASM, Firefox and Emscripten base archives;
 it does not replace them. The candidate has not yet been deployed.
+
+The ABI v2 source archive above has since been published on the authenticated
+source page, and its complete downloaded hash was verified with a disposable
+registered account. The ABI v2 Browser bundle and engine are live as release
+`8d5fe713698d4bb94781b10ef22c4815e48b1d046237730e23259945d2332f05`.
+The final-link inventory and license review limitations noted above remain.

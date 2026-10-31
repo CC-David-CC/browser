@@ -84,3 +84,11 @@ that a completely stalled Gecko event loop can process cancellation. Unit
 tests cover refusing an incompatible manifest and only signaling active loads.
 Before shipping, publish the corresponding v2 source and native patch, complete
 the remaining failure/lifecycle review, and verify the built deployment live.
+
+The integrated ABI v2 build described above was subsequently deployed in
+release `8d5fe713698d4bb94781b10ef22c4815e48b1d046237730e23259945d2332f05`.
+Its source package is available via the authenticated Licenses & source page.
+The packed bundle independently passed the delayed-response test in 67 ms;
+live desktop and emulated-phone sessions rendered example.com, and live Stop
+returned in the phone-sized session. The progress-listener prototypes remain
+unshipped; page-completion/error reporting is a separate outstanding issue.
