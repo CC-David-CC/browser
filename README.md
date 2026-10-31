@@ -105,6 +105,13 @@ blocking content rehosted on unrelated domains or accessed through other
 proxies. The separate root-owned live policy is enforced by the Browser relay;
 this source file is its starting template, not the active operator copy.
 
+The source relay also rejects IPv4-mapped IPv6 and the well-known NAT64,
+local-use NAT64, 6to4 and Teredo ranges: an embedded IPv4 address could
+otherwise evade IPv4 destination rules. This change is pending deployment.
+Ordinary public IPv6 remains supported. A network-specific NAT64 prefix cannot
+be recognized from an address alone; operators must block any such configured
+prefix separately or avoid using a translation route for relay traffic.
+
 The desktop implementation can open selected `.html`/`.htm` files from My
 files as well as upload a local HTML file. It copies the selected document to
 the temporary guest profile. Each HTML file can be up to 128 MiB; imported

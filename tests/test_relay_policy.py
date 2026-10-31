@@ -38,6 +38,16 @@ class BrowserRelayPolicyTests(unittest.TestCase):
         for addresses in [['127.0.0.1'], ['10.1.2.3'], ['169.254.169.254'], ['::1'], ['::ffff:1.1.1.1'], ['1.1.1.1','192.168.1.1']]:
             with self.subTest(addresses=addresses), self.assertRaises(module.PolicyDenied): self.policy.check_addresses(addresses)
 
+    def test_ipv6_translation_cannot_bypass_ipv4_destination_rules(self):
+        self.assertEqual(self.policy.check_addresses(['2606:4700:4700::1111']), ('2606:4700:4700::1111',))
+        # Deny even globally routable embedded IPv4: an operator may have
+        # blocked that IPv4 or its country without blocking the outer prefix.
+        for address in ['64:ff9b::a00:1', '64:ff9b::808:808',
+                        '64:ff9b:1::808:808', '2002:0808:0808::',
+                        '2001:0:4136:e378:8000:63bf:f5ff:fffe']:
+            with self.subTest(address=address), self.assertRaises(module.PolicyDenied):
+                self.policy.check_addresses([address])
+
     def test_invalid_hosts_and_ports_fail_closed(self):
         for name in ['127.0.0.1', '0x08.0x08.0x08.0x08', '8.8.2056', '[::1]', 'localhost', 'evil.example.com@youtube.com', 'foo..example.com', ' bad.example.com', '2130706433']:
             with self.subTest(name=name), self.assertRaises(module.PolicyDenied): self.policy.check_hostname(name, 443)

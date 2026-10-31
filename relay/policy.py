@@ -13,6 +13,13 @@ import re
 import socket
 import threading
 
+# These IPv6 transition ranges can encode an IPv4 destination. Treating the
+# outer IPv6 address as the destination would bypass IPv4 CIDR/country rules.
+# Network-specific NAT64 prefixes cannot be identified from an address alone.
+IPV6_TRANSLATION_RANGES = tuple(map(ipaddress.IPv6Network, (
+    '64:ff9b::/96', '64:ff9b:1::/48', '2002::/16', '2001::/32',
+)))
+
 class PolicyDenied(ValueError):
     pass
 
@@ -100,7 +107,9 @@ class DestinationPolicy:
             except ValueError as error: raise PolicyDenied('Invalid resolved address') from error
             # Reject the whole answer if it mixes public and private addresses;
             # the caller connects only to one of these exact validated addresses.
-            if not address.is_global or address.is_multicast or address.is_unspecified or (isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped is not None):
+            if (not address.is_global or address.is_multicast or address.is_unspecified or
+                (isinstance(address, ipaddress.IPv6Address) and
+                 (address.ipv4_mapped is not None or any(address in network for network in IPV6_TRANSLATION_RANGES)))):
                 raise PolicyDenied('Non-public resolved address')
             result.append(str(address))
         return tuple(dict.fromkeys(result))
