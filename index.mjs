@@ -1,3 +1,4 @@
+import {chooseDownloadTarget} from './src/download-target.mjs';
 import {navigationFeedback} from './src/navigation-feedback.mjs';
 import {recordDomain,getDomainReport,wasReportSent,markReportSent} from './src/domain-usage.mjs';
 import {config} from './config.mjs';
@@ -147,12 +148,10 @@ export function mount(host) {
             save.disabled=true;discard.disabled=true;
             try{
               if(keep){
-                if(!host.storage?.mirrorFileContext)throw Error('Sign in to save downloads to My files.');
-                const requested=doc.defaultView.prompt('Save download in My files as:',m.name);if(requested===null)return;
-                const c=await host.storage.mirrorFileContext();if(!current(s,g)||!c.valid())return;
-                const name=c.name(requested),result=await s.request('download-read',{id:m.id});
-                if(!current(s,g)||!c.valid())return;
-                await c.files.write('/'+name,result.data);if(!current(s,g)||!c.valid())return;
+                const target=await chooseDownloadTarget({storage:host.storage,prompt:(...args)=>doc.defaultView.prompt(...args),confirm:(...args)=>doc.defaultView.confirm(...args),current:()=>current(s,g),signal:host.signal,suggested:m.name});if(!target)return;
+                const result=await s.request('download-read',{id:m.id});
+                if(!current(s,g)||!target.context.valid())return;
+                await target.context.files.write(target.path,result.data,target.expected);if(!current(s,g)||!target.context.valid())return;
               }
               try{await s.request('download-discard',{id:m.id});}
               catch(error){
@@ -217,14 +216,12 @@ export function mount(host) {
       if(!['http:','https:'].includes(parsed.protocol))throw Error('Enter an HTTP or HTTPS download URL.');
       let suggested=decodeURIComponent(parsed.pathname.split('/').pop()||'download').replace(/[\/\\\u0000-\u001f\u007f]/g,'_');
       if(!suggested||suggested==='.'||suggested==='..')suggested='download';
-      const requested=doc.defaultView.prompt('Save download in My files as:',suggested.slice(0,120));
-      if(requested===null)return;
-      const context=await host.storage.mirrorFileContext();if(!current(s,g)||!context.valid())return;
-      const name=context.name(requested);setStatus('Downloading…');
+      const target=await chooseDownloadTarget({storage:host.storage,prompt:(...args)=>doc.defaultView.prompt(...args),confirm:(...args)=>doc.defaultView.confirm(...args),current:()=>current(s,g),signal:host.signal,suggested:suggested.slice(0,120)});if(!target)return;
+      const context=target.context;setStatus('Downloading…');
       if(usageOwner&&host.storage.signedInSubject?.()===usageOwner)void recordDomain(usageOwner,parsed.hostname).catch(error=>log(textError(error)));
       const result=await connection.download(url);if(!current(s,g)||!context.valid())return;
       for(const domain of result.domains.slice(1))if(usageOwner&&host.storage.signedInSubject?.()===usageOwner)void recordDomain(usageOwner,domain).catch(error=>log(textError(error)));
-      await context.files.write('/'+name,result.data);if(current(s,g))setStatus('Saved to My files. Server synchronization may continue in the background.');
+      await context.files.write(target.path,result.data,target.expected);if(current(s,g)&&context.valid())setStatus('Saved to My files. Server synchronization may continue in the background.');
     }catch(error){if(current(s,g))report(error);}
   },{signal:lifetime.signal});
   buttons.files?.addEventListener('click',async()=>{

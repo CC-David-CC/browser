@@ -188,3 +188,5 @@ it does not verify the physical Android keyboard, all input methods, selection,
 drag-and-drop, or accessibility. Desktop pointer behavior remains available.
 The keyboard bridge sends committed text to Gecko; complex composition and
 suggestion replacements still need device testing.
+
+A source-only development update adds folder selection and version-checked replacement to both download paths. Local real-engine clicked-download tests covered choosing a folder, cancellation, replacement and account sync at desktop and phone-sized viewports; a local URL-download test used a stub response and real account sync. The broader clicked-download regression reached its interrupted-download check and timed out there, so that separate failure still needs investigation. The folder update has not yet been deployed.
