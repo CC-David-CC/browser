@@ -21,6 +21,14 @@ completion or HTTP-error indication needs an engine-side progress signal and a
 newly qualified engine build. For now, inspect the page itself and any separate
 network-policy message rather than interpreting that status as a success check.
 
+An isolated experimental engine queried `nsIWebProgress::GetIsLoadingDocument`
+through the docshell. It compiled and linked, but did not provide a reliable
+loading signal in a real Gecko/Wisp test: the fixture received the request and
+held the HTTP response for eight seconds, while repeated one-second status
+samples all reported `false`. The experiment was not deployed. A progress
+listener or another authoritative signal needs its own verification; neither a
+changed URL nor this flag alone proves navigation has finished.
+
 ## Historical source handoff 0.1.0
 
 The following report describes the earlier source-only handoff and is retained
