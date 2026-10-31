@@ -4,6 +4,32 @@ import {verifyIdentity,PROOF_TYPE} from '../../network/identity.mjs';
 const token=s=>typeof s==='string'&&/^[A-Za-z0-9_-]{43}$/.test(s);
 export const relayUnavailable=status=>[502,503,504].includes(status)?'Browser network is temporarily unavailable. Select Reset engine to try again.':null;
 
+const MAX_DOWNLOAD_BYTES=128*1024*1024;
+/** Consume a bounded response. The relay supplies Content-Length after its
+ * private temporary-file fetch, so normally only one full-size buffer is held. */
+export async function readDownloadBody(response){
+  const raw=response.headers.get('content-length');let expected=null;
+  if(raw!==null){
+    if(!/^\d{1,9}$/.test(raw))throw Error('Invalid download length.');
+    expected=Number(raw);if(expected>MAX_DOWNLOAD_BYTES)throw Error('Download is larger than 128 MiB.');
+  }
+  const reader=response.body?.getReader();if(!reader)throw Error('Download response has no body.');
+  const result=expected===null?null:new Uint8Array(expected),chunks=[];let size=0;
+  try{
+    while(true){
+      const {done,value}=await reader.read();if(done)break;
+      if(!(value instanceof Uint8Array))throw Error('Invalid download data.');
+      const next=size+value.length;
+      if(next>MAX_DOWNLOAD_BYTES)throw Error('Download is larger than 128 MiB.');
+      if(result){if(next>expected)throw Error('Download length does not match response.');result.set(value,size);}else chunks.push(value);
+      size=next;
+    }
+    if(result){if(size!==expected)throw Error('Download ended before all bytes arrived.');return result;}
+    const data=new Uint8Array(size);let at=0;for(const chunk of chunks){data.set(chunk,at);at+=chunk.length;}return data;
+  }catch(error){await reader.cancel().catch(()=>{});throw error;}
+  finally{reader.releaseLock();}
+}
+
 export async function openBrowserRelay(config,session,{valid=()=>true,onFailure=()=>{}}={}){
   const meta=config?.browserRelay,identity=config?.identity,api=identity?.apiBase;
   requireThat(identity?.mode==='server'&&identity.issuer===location.origin&&session?.public?.kind==='registered','Sign in to use Browser networking.');
@@ -62,10 +88,8 @@ export async function openBrowserRelay(config,session,{valid=()=>true,onFailure=
     check();requireThat(!closed,'Browser networking has disconnected.');
     const response=await fetch(root+'/download',{method:'POST',mode:'same-origin',credentials:'same-origin',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:source}),signal:AbortSignal.timeout(65000)});
     if(!response.ok){let result;try{result=await response.json();}catch{}throw Error(relayUnavailable(response.status)||result?.error||'Download failed ('+response.status+').');}
-    const reader=response.body.getReader(),chunks=[];let size=0;
-    try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>128*1024*1024)throw Error('Download is larger than 128 MiB.');chunks.push(value);}}
-    catch(error){await reader.cancel().catch(()=>{});throw error;}
-    check();const data=new Uint8Array(size);let at=0;for(const chunk of chunks){data.set(chunk,at);at+=chunk.length;}
+    const data=await readDownloadBody(response);
+    check();
     return {data,domains:(response.headers.get('X-Codi-Domain-Requests')||'').split(',').filter(Boolean)};
   },close(){if(closed)return;closed=true;clearTimeout(timer);void post(root+'/close',{}).catch(()=>{});}};
 }
