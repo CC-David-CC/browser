@@ -22,6 +22,10 @@
     "engine-support/DownloadUtils.sys.mjs",
     "engine-support/Downloads.sys.mjs",
     "engine-support/HelperAppDlg.sys.mjs",
-    "engine-support/SOURCES.json"
+    "engine-support/SOURCES.json",
+    "engine-fonts/arabic.ttf",
+    "engine-fonts/cjk.data",
+    "engine-fonts/NOTO-CORE-LICENSE.txt",
+    "engine-fonts/NOTO-CJK-LICENSE.txt"
   ]
 }

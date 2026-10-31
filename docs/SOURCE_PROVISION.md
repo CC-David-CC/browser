@@ -227,3 +227,13 @@ The corrected target Rust notice input, including the two previously omitted
 `8c083caaa5a59ab1a01c0239ca82e378f4e9868b91f6c746a4f711ccea9444eb`.
 `tools/audit_missing_rust_crates.py` and `RUST_MISSING_REGISTRY.json` reproduce
 the registry-archive checksum and filename audit without extracting archives.
+
+The Browser also distributes unmodified Noto Sans Arabic Regular and Noto Sans
+CJK Regular fonts, under the SIL Open Font License 1.1. Their copyright and
+license notices ship as `engine-fonts/NOTO-CORE-LICENSE.txt` and
+`engine-fonts/NOTO-CJK-LICENSE.txt`. Run `python3 tools/prepare_fonts.py` in the
+Browser app before building: it checks installed fonts by SHA-256 or downloads
+the exact Ubuntu packages and verifies both package and extracted font hashes.
+These assets add approximately 19 MiB to the first Browser app load and are
+cached normally. The CJK collection supports several regional faces; it is not
+a promise of font coverage for every writing system.

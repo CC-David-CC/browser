@@ -58,7 +58,11 @@ async function init(payload){
   if(!Number.isInteger(config.commandTimeoutMs) || config.commandTimeoutMs<1000 || config.commandTimeoutMs>120000)throw new Error('Bad command timeout.');
   if(!Number.isInteger(config.maxHTMLBytes) || config.maxHTMLBytes<1 || config.maxHTMLBytes>134217728)throw new Error('Bad input-file limit.');
   event('status',{message:'Loading the independent Gecko engine…'});
-  const [runtime,data]=await Promise.all([verifiedBytes(assets.runtime),verifiedBytes(assets.data)]);
+  const fontAssets=[
+    {file:'arabic.ttf',bytes:244072,sha256:'504d7407d86875acf7d04dfaa0fd7524d0b8797723bc4aa18022f29db25b0b6e'},
+    {file:'cjk.data',bytes:19484784,sha256:'b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a'},
+  ].map(asset=>({...asset,url:new URL('../engine-fonts/'+asset.file,base).href}));
+  const [runtime,data,arabic,cjk]=await Promise.all([verifiedBytes(assets.runtime),verifiedBytes(assets.data),...fontAssets.map(verifiedBytes)]);
   const sourceURL=URL.createObjectURL(new Blob([runtime],{type:'text/javascript'}));blobURLs.push(sourceURL);
   let Connection;
   if(config.wispURL){
@@ -118,6 +122,12 @@ async function init(payload){
       m.geckoProviders={};
       if(Connection){m.WispClientConnection=Connection;m.wispUrl=config.wispURL;}
     }],
+    // The headless engine scans this process-local directory during startup.
+    // Install verified fonts before callMain(), not after font discovery.
+    onRuntimeInitialized(){
+      this.FS.writeFile('/gre-baked/fonts/NotoArabic.ttf',new Uint8Array(arabic));
+      this.FS.writeFile('/gre-baked/fonts/NotoCJK.ttc',new Uint8Array(cjk));
+    },
     instantiateWasm:(imports,success)=>{
       engineMemory=imports.env.memory;
       if(!(engineMemory instanceof WebAssembly.Memory))throw new Error('Engine shared memory is unavailable.');
