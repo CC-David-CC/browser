@@ -16,7 +16,7 @@ sys.path[:0]=[str(ROOT/'active-system'),str(ROOT/'apps/system/browser')]
 from browser_service.http import BrowserHTTP
 from relay.audit import AuditLedger
 from relay.download import Downloader
-from relay.policy import PolicyDenied,hostname
+from relay.policy import PolicyDenied,DownloadTooLarge,hostname
 
 class FixturePolicy:
     server_audit_enabled=True
@@ -43,9 +43,20 @@ class AuditHTTP(unittest.IsolatedAsyncioTestCase):
         downloader=Downloader(relay,load_policy=lambda _:FixturePolicy())
         adapter=BrowserHTTP(Session(),relay,origin='http://127.0.0.1',secure_cookie=False,downloader=downloader)
         async def body(_request,_keys):return {'url':f'http://allowed.example:{self.target_port}/redirect'}
-        adapter.body=body;adapter.identifier=lambda _request:'test';adapter.secret=lambda _request:'test'
+        self.adapter=adapter;adapter.body=body;adapter.identifier=lambda _request:'test';adapter.secret=lambda _request:'test'
         app=web.Application();app.router.add_post('/download',adapter.download);self.front=web.AppRunner(app);await self.front.setup();site=web.TCPSite(self.front,'127.0.0.1',0);await site.start();self.front_port=site._server.sockets[0].getsockname()[1]
     async def asyncTearDown(self):await self.front.cleanup();await self.target.cleanup()
+
+    async def test_size_error_is_clear_but_other_policy_failures_stay_generic(self):
+        async def too_large(*_args,**_kwargs):raise DownloadTooLarge('sensitive internal detail')
+        async def denied(*_args,**_kwargs):raise PolicyDenied('sensitive internal detail')
+        async with ClientSession() as client:
+            self.adapter.downloader.fetch=too_large
+            async with client.post(f'http://127.0.0.1:{self.front_port}/download') as response:
+                self.assertEqual(response.status,413);self.assertEqual((await response.json())['error'],'Download is larger than 128 MiB.')
+            self.adapter.downloader.fetch=denied
+            async with client.post(f'http://127.0.0.1:{self.front_port}/download') as response:
+                self.assertEqual(response.status,403);self.assertNotIn('sensitive',(await response.json())['error'])
 
     async def test_signed_metadata_covers_redirect_and_never_contains_file_or_path(self):
         async with ClientSession() as client:

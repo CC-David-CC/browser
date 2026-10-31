@@ -172,11 +172,16 @@ class BrowserHTTP:
                 if not chunk:break
                 await response.write(chunk)
             await response.write_eof();return response
-        except (ValueError,OSError,asyncio.TimeoutError,ClientError):
+        except (ValueError,OSError,asyncio.TimeoutError,ClientError) as error:
             if response is not None and response.prepared:
                 response.force_close()
                 if request.transport:request.transport.close()
                 return response
+            # Only this explicit, bounded condition is safe to expose. Other
+            # failures retain the generic message and cannot reveal internals.
+            from relay.policy import DownloadTooLarge
+            if isinstance(error,DownloadTooLarge):
+                return web.json_response({'error':'Download is larger than 128 MiB.'},status=413,headers={'Cache-Control':'no-store'})
             return web.json_response({'error':'Download failed or was blocked by the network policy.'},status=403,headers={'Cache-Control':'no-store'})
         finally:
             if result is not None:result['file'].close()
