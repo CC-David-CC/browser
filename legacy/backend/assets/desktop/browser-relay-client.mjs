@@ -10,14 +10,15 @@ export async function openBrowserRelay(config,session,{valid=()=>true,onFailure=
   const base=api.slice(0,-7)+'/browser-relay';
   requireThat(meta?.version==='codi-browser-relay/1'&&meta.basePath===base&&/^[a-f0-9]{64}$/.test(meta.policySHA256),'Browser networking is not configured.');
   const check=()=>requireThat(valid()&&session.public.kind==='registered','Account changed; reopen Browser.');
-  const post=async(path,body,tokenValue=null)=>{
-    check();const response=await fetch(path,{method:'POST',mode:'same-origin',credentials:'same-origin',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',headers:{'Content-Type':'application/json',...(tokenValue?{Authorization:'Codi '+tokenValue}:{})},body:JSON.stringify(body),signal:AbortSignal.timeout(10000)});
-    const bytes=new Uint8Array(await response.arrayBuffer());requireThat(bytes.length<=16384,'Browser relay response too large.');
-    let result;try{result=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{throw Error('Invalid Browser relay response.');}
+  const post=async(path,body,tokenValue=null,{timeoutMs=10000,maxResponse=16384}={})=>{
+    check();const response=await fetch(path,{method:'POST',mode:'same-origin',credentials:'same-origin',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',headers:{'Content-Type':'application/json',...(tokenValue?{Authorization:'Codi '+tokenValue}:{})},body:JSON.stringify(body),signal:AbortSignal.timeout(timeoutMs)});
+    const bytes=new Uint8Array(await response.arrayBuffer());requireThat(bytes.length<=maxResponse,'Browser relay response too large.');
+    let result;try{result=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{if(!response.ok)throw Error('Browser request failed ('+response.status+').');throw Error('Invalid Browser relay response.');}
     check();if(!response.ok)throw Error(result.error||'Browser network connection failed ('+response.status+').');return result;
   };
   await verifyIdentity(session.public,identity);check();
   let challenge=await post(base+'/challenge',{}),id=challenge.connection_id,closed=false,timer=0;
+  const reportRequestsEnabled=challenge.report_requests===true;
   requireThat(token(id)&&token(challenge.nonce)&&challenge.policy_sha256===meta.policySHA256,'Invalid Browser relay challenge.');
   const root=base+'/connection/'+id;
   async function authorize(ch){
@@ -46,7 +47,17 @@ export async function openBrowserRelay(config,session,{valid=()=>true,onFailure=
   if(!valid()){closed=true;throw Error('Account changed; reopen Browser.');}
   timer=setTimeout(renew,12000);
   const url=new URL(root+'/wisp/',location.origin);url.protocol=url.protocol==='https:'?'wss:':'ws:';
-  return {url:url.href,async download(source){
+  const reportId=value=>{requireThat(typeof value==='string'&&/^[A-Za-z0-9_-]{32}$/.test(value),'Invalid report request.');return value;};
+  const reports=reportRequestsEnabled?Object.freeze({
+    pending:()=>post(root+'/reports/pending',{}),
+    role:()=>post(root+'/reports/role',{}),
+    list:()=>post(root+'/reports/list',{}),
+    submit:(request,report)=>post(root+'/reports/submit',{request:reportId(request),report},null,{timeoutMs:90000}),
+    create:(seconds=3600)=>post(root+'/reports/create',{seconds}),
+    summary:(request,subject=null)=>post(root+'/reports/summary',{request:reportId(request),subject},null,{maxResponse:1024*1024}),
+    remove:request=>post(root+'/reports/remove',{request:reportId(request)}),
+  }):null;
+  return {url:url.href,reports,async download(source){
     check();requireThat(!closed,'Browser networking has disconnected.');
     const response=await fetch(root+'/download',{method:'POST',mode:'same-origin',credentials:'same-origin',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:source}),signal:AbortSignal.timeout(65000)});
     if(!response.ok){let result;try{result=await response.json();}catch{}throw Error(result?.error||'Download failed ('+response.status+').');}
