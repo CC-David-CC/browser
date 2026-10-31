@@ -156,3 +156,16 @@ modules and Browser adapter in
 `https://ksu.codes/browser-sources/codi-browser-source-29a71d717.tar.zst`,
 SHA-256 `f231dfee54279c20c6bca77988b556d6fcad7c8886792eb78c63e1f9c10b680b`.
 The pinned upstream Firefox source archive and earlier notices remain linked.
+
+The built `libxul_so.list` includes `config/external/rlbox/rlbox_thread_locals.o`,
+whose source includes RLBox headers. Firefox's generated license page names
+`third_party/rlbox`, but the separately bundled notices did not reproduce its
+specific copyright. The exact pinned `third_party/rlbox/LICENSE` is now also
+included in the public combined notices. Its SHA-256 is
+`891d419ba95ab39090775820f4178421dbdcd241c080003aa44f62445a48615a`;
+the public combined notice SHA-256 is
+`28b3c6267097ecfa2e40dc56de5715348ca011652a2b26817f7cbba15e2570b7`.
+Recreate the extra input from the pinned checkout with
+`git show 2e1e835a5da5907e5ceef19aade58a7493f1e34d:third_party/rlbox/LICENSE`,
+and supply it to `prepare_notices.py --rlbox-license`. This addresses the
+identified attribution gap; it does not establish a complete final-link audit.
