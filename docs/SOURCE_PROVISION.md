@@ -118,9 +118,17 @@ the declared licenses and available license/notice files for all matching
 vendored package versions, yielding a conservative set rather than an exact
 final-link inventory. The package contains 38 matching vendored versions
 without separate top-level notice files; their declared licenses and source
-remain listed. The other 142 names include workspace and toolchain crates and
-need separate attribution review. This does not establish which target-built
-crates survive final linking. The source input SHA-256 is
+remain listed. A subsequent tracked-workspace manifest scan matched 131 of
+the other 142 names to Firefox source packages, leaving 13 names unmatched
+across the full tracked manifest scan (the scans use different file-selection
+rules). These include Rust standard-library and compiler crates. The build used
+Rust 1.95.0, commit `59807616e1fa2540724bfbac14d7976d7e4a3860`; its standard
+library copyright and dependency notice HTML is appended unchanged to the
+public combined notice. Some workspace manifests omit a license field;
+sampling their source files showed Mozilla headers, but each still needs
+review. This does not establish which target-built crates survive final
+linking. The Rust crate notice input SHA-256 is
 `8e8bafa0d9f2f3243d1e02910c9b9fd270c24f9c357aa3fcafcb3be8a4a60712`;
-the public combined notices match
-`0c225076a90714c0badf93424d3ae6ee8c57d2d773d17af6641af63643cb042a`.
+the public combined notices now match
+`b1a5cd60fa71ae515da2e05ffb88358b1f2d4925cba2d79ae4ee8b6e6b1eeb6c`.
+The reproducible manifest scan is `tools/inventory_workspace_crates.py`.
