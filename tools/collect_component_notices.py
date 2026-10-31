@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Collect notices for libraries named in this pinned Gecko link list."""
 import argparse
+import hashlib
 from pathlib import Path
 import subprocess
 
@@ -17,10 +18,31 @@ PATHS=('third_party/abseil-cpp/LICENSE','third_party/dav1d/COPYING',
        'third_party/rust/debug_tree/Cargo.toml.orig',
        'third_party/rust/void/Cargo.toml')
 
+# These notices occur inside source files rather than standalone license files.
+# Pin both complete inputs before extracting their original comment headers.
+AA_STROKE_HEADERS=(
+    ('third_party/rust/aa-stroke/src/bezierflattener.rs',
+     '6afe01b228b5e05878550af16beee71f0ef7f881203e5fa24d1b628c360908e6', 'lines'),
+    ('third_party/rust/aa-stroke/src/tri_rasterize.rs',
+     'a01a730551b4b6be78cbc10fe404c9c7f0c2fc46884accfb212f3232d3dc47b7', 'block'),
+)
+
 def collect(repo):
     def git(*args):return subprocess.check_output(['git','-C',str(repo),*args])
     if git('rev-parse','HEAD').decode().strip()!=COMMIT:raise ValueError('Unexpected Firefox revision')
-    return b''.join(('\n===== Firefox source: '+path+' =====\n').encode()+git('show','HEAD:'+path)+b'\n' for path in PATHS)
+    output=b''.join(('\n===== Firefox source: '+path+' =====\n').encode()+git('show','HEAD:'+path)+b'\n' for path in PATHS)
+    for path,expected,kind in AA_STROKE_HEADERS:
+        source=git('show','HEAD:'+path)
+        if hashlib.sha256(source).hexdigest()!=expected:raise ValueError('Unexpected source: '+path)
+        if kind=='lines':
+            header=b'\n'.join(source.split(b'\n',3)[:3])+b'\n'
+            if not header.startswith(b'// Licensed to the .NET Foundation') or b'MIT license' not in header:raise ValueError('Unexpected .NET notice')
+        else:
+            header,separator,_=source.partition(b'\n*/\n')
+            if not separator or b'Copyright 2012 VMware, Inc.' not in header:raise ValueError('Unexpected VMware notice')
+            header+=separator
+        output+=('\n===== Firefox source notice: '+path+' =====\n').encode()+header+b'\n'
+    return output
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--firefox',type=Path,required=True);parser.add_argument('--output',type=Path,required=True);args=parser.parse_args()

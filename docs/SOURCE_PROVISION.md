@@ -532,3 +532,16 @@ package with no direct match is not proven absent. The final map contained no
 not prove the absence of every related component. The existing notices and
 source provisions remain available to signed-in users. Temporary map and
 relink artifacts were removed after the compact result and hashes were saved.
+
+### aa-stroke embedded source notices
+
+The pinned `aa-stroke` Rust package has ordinary modules `bezierflattener.rs`
+and `tri_rasterize.rs` with attribution notices embedded in their source,
+not in separate license files. The compiled-component notice collector checks
+both full source-file hashes at the pinned Firefox revision and includes their
+original headers. The former refers to an MIT license in its upstream project;
+identification of that original project and its accompanying license text is
+still under review. The triangle-rasterization header includes its own terms.
+The full pinned Firefox source remains available from the signed-in source
+page. The final-link symbol match identifies the package, but does not by
+itself prove which functions from each module survived optimization.
