@@ -284,6 +284,18 @@ inputs produced the same combined notice now served publicly, SHA-256
 This addresses the identified non-GitHub license files, not the remaining
 unresolved dependencies or full final-link inventory.
 
+For `void 1.0.2`, the upstream release tag resolves to
+`ab2f4dbb7c95c144ccba2fa8afd11e155aa91133`. Its README and Rust source match
+Firefox's vendored files byte for byte; the package metadata names Jonathan
+Reem and declares MIT. The release tree has no separate license file. Another
+upstream branch contains a dual-license commit and MIT notice, but it is not
+an ancestor of this release; this review does not assume that notice applies
+to the release. `tools/audit_void_release.py --firefox FIREFOX --upstream
+RUST_VOID` checks the pinned lockfile, release tag, metadata and source match.
+The package's presence in target build fingerprints still does not establish
+that its code survives final linking, and the missing release-specific notice
+remains a licensing uncertainty.
+
 The HTML import update's Browser source is available and indexed at
 `https://ksu.codes/browser-sources/codi-browser-source-1573b1ffc.tar.zst`,
 SHA-256 `4f376d5619d916adf902c7818bc2f8a577c2849a830db27790aa045d00f3f4a5`.
