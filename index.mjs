@@ -81,9 +81,9 @@ export function mount(host) {
       panel.append(label,note,request,refresh,select,show,output);details.append(panel);reportPanel=panel;await update();
     }catch(error){if(!disposed&&generation===g)log('Domain report administration unavailable: '+textError(error));}
   }
-  async function operation(type,payload={}) {
+  async function operation(type,payload={},transfer=[]) {
     const s=instance,g=generation;if(!s||s.state!=='ready')return;
-    try{networkNotice='';setStatus('Loading…');await s.request(type,payload);if(current(s,g))setStatus(networkNotice||(payload.action==='stop'?'Stopped.':'Navigation requested.'));}
+    try{networkNotice='';setStatus('Loading…');await s.request(type,payload,undefined,transfer);if(current(s,g))setStatus(networkNotice||(payload.action==='stop'?'Stopped.':'Navigation requested.'));}
     catch(e){if(current(s,g))report(e);}
   }
   function applySize(){
@@ -226,14 +226,14 @@ export function mount(host) {
       const context=await host.storage.mirrorFileContext();if(!current(s,g)||!context.valid())return;
       const file=await context.files.read(path);if(!current(s,g)||!context.valid())return;
       if(file.data.byteLength>config.maxHTMLBytes)throw new Error('HTML file too large.');
-      const html=new TextDecoder('utf-8',{fatal:true}).decode(file.data);
-      await operation('open-html',{html});
+      const data=file.data.byteOffset===0&&file.data.byteLength===file.data.buffer.byteLength?file.data.buffer:file.data.slice().buffer;
+      await operation('open-html',{data},[data]);
     }catch(e){if(current(s,g))report(e);}
   },{signal:lifetime.signal});
   picker.addEventListener('change',async()=>{
     const f=picker.files?.[0];picker.value='';if(!f)return;
     const s=instance,g=generation;
-    try{if(f.size>config.maxHTMLBytes)throw new Error('HTML file too large.');const html=await f.text();if(current(s,g))await operation('open-html',{html});}catch(e){report(e);}
+    try{if(f.size>config.maxHTMLBytes)throw new Error('HTML file too large.');const data=await f.arrayBuffer();if(current(s,g))await operation('open-html',{data},[data]);}catch(e){report(e);}
   },{signal:lifetime.signal});
   const ro=new ResizeObserver(()=>{clearTimeout(sizeTimer);sizeTimer=setTimeout(applySize,100);});ro.observe(stage);
   const io=new IntersectionObserver(entries=>{

@@ -28,14 +28,14 @@ export class BrowserSession {
     } else if(m.kind==='fatal') { this.fail(new Error(m.error)); }
     else if(m.kind==='event') { this.onEvent(m); }
   }
-  request(type,payload={},timeout=this.commandTimeoutMs) {
+  request(type,payload={},timeout=this.commandTimeoutMs,transfer=[]) {
     if(this.closed || !this.worker) return Promise.reject(new Error('Session is closed.'));
     if(this.pending.size>=32) return Promise.reject(new Error('Too many pending browser operations.'));
     const id=++this.seq;
     return new Promise((resolve,reject)=>{
       const timer=setTimeout(()=>this.fail(new Error(`${type} timed out; instance terminated.`)),timeout);
       this.pending.set(id,{resolve,reject,timer});
-      try { this.worker.postMessage({kind:'request',id,type,payload}); }
+      try { this.worker.postMessage({kind:'request',id,type,payload},transfer); }
       catch(e) { clearTimeout(timer);this.pending.delete(id);reject(e); }
     });
   }

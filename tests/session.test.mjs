@@ -3,8 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {BrowserSession} from '../src/session.mjs';
 class FakeWorker {
-  sent=[];killed=0;ack=true;
-  postMessage(m){this.sent.push(m);if(m.kind==='shutdown'&&this.ack)queueMicrotask(()=>this.emit({kind:'stopped'}));}
+  sent=[];transfers=[];killed=0;ack=true;
+  postMessage(m,transfer){this.sent.push(m);this.transfers.push(transfer);if(m.kind==='shutdown'&&this.ack)queueMicrotask(()=>this.emit({kind:'stopped'}));}
   emit(data){this.onmessage?.({data});}
   terminate(){this.killed++;}
   answer(last=this.sent.at(-1),value={}){this.emit({kind:'reply',id:last.id,ok:true,value});}
@@ -24,3 +24,5 @@ test('event callback failure still disposes after fatal failure',async()=>{const
 test('missing graceful acknowledgment still terminates once',async()=>{const {s,w}=await started();w.ack=false;s.dispose();await new Promise(r=>setTimeout(r,280));assert.equal(w.killed,1);});
 test('closed session neither sends input nor accepts requests',async()=>{const {s,w}=await started();s.dispose();await tick();const n=w.sent.length;s.notify('input',{});assert.equal(w.sent.length,n);await assert.rejects(s.request('x'),/closed/);});
 test('session cannot start twice',async()=>{const {s}=await started();await assert.rejects(s.start({}),/only once/);s.dispose();await tick();});
+
+test('explicit file buffers are transferred to the worker',async()=>{const {s,w}=await started();const data=new ArrayBuffer(1024);const pending=s.request('open-html',{data},undefined,[data]);assert.deepEqual(w.transfers.at(-1),[data]);w.answer();await pending;s.dispose();await tick();});

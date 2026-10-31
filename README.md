@@ -107,8 +107,11 @@ this source file is its starting template, not the active operator copy.
 
 The desktop implementation can open selected `.html`/`.htm` files from My
 files as well as upload a local HTML file. It copies the selected document to
-the temporary guest profile; sibling files and persistent browser profiles are
-not implemented yet. The live relay also supports an explicit Download
+the temporary guest profile. Each HTML file can be up to 128 MiB; imported
+pages share a 256 MiB per-window budget so navigation history remains bounded.
+Reset the engine to clear that temporary history. Very large documents may be
+slow or exceed the device’s available memory. Sibling files and persistent
+browser profiles are not implemented yet. The live relay also supports an explicit Download
 URL action into My files, limited to 128 MiB. That independent fetch does not
 include Gecko cookies. Downloads clicked inside
 Gecko use its own session and appear in a temporary queue; choose Save to My

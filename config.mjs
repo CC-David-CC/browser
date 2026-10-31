@@ -10,5 +10,5 @@ export const config = Object.freeze({
   framesPerSecond: 20,
   startupTimeoutMs: 120000,
   commandTimeoutMs: 45000,
-  maxHTMLBytes: 2 * 1024 * 1024,
+  maxHTMLBytes: 128 * 1024 * 1024,
 });

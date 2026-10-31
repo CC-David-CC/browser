@@ -195,15 +195,15 @@ async function run(type,payload){
       await native({op:OP.load,url});hasDocument=true;return {};
     }
     case 'open-html':{
-      if(typeof payload.html!=='string')throw new Error('HTML must be text.');
-      const bytes=new TextEncoder().encode(payload.html);
-      if(bytes.byteLength>config.maxHTMLBytes)throw new Error('HTML file exceeds configured limit.');
-      // Explicit user-selected source is copied into guest memory, never host DOM.
-      // Preserve previous files for native history. Total import bytes are bounded.
-      if((config.importedBytes??0)+bytes.byteLength>16*1024*1024)throw new Error('Per-window imported HTML budget reached; reset to start fresh.');
-      config.importedBytes=(config.importedBytes??0)+bytes.byteLength;
+      const bytes=payload.data instanceof ArrayBuffer?new Uint8Array(payload.data):typeof payload.html==='string'?new TextEncoder().encode(payload.html):null;
+      if(!bytes)throw new Error('HTML file data is invalid.');
+      if(bytes.byteLength>config.maxHTMLBytes)throw new Error('HTML file exceeds the 128 MiB limit.');
+      // Imports remain in the private guest filesystem for browser history.
+      // Bound their combined size independently of the per-file limit.
+      if((config.importedBytes??0)+bytes.byteLength>256*1024*1024)throw new Error('Imported pages have reached the 256 MiB window limit. Reset the engine to open more.');
       const path=`/browser-input/page-${++pageSeq}.html`;
       moduleInstance.FS.writeFile(path,bytes);
+      config.importedBytes=(config.importedBytes??0)+bytes.byteLength;
       await native({op:OP.load,url:'file://'+path});hasDocument=true;return {};
     }
     case 'download-read':{
