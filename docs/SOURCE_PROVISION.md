@@ -30,6 +30,10 @@ installed package's source, package metadata, README and AGPL-3.0 license.
 An additional archive of the Codi Browser app and its related integration
 sources was made from Git commit `59dfaf024` with SHA-256
 `00e499a9c5e8c812666616023f4d02e98f49696b7fc7d85040123a93ebe0ea34`.
+The desktop release candidate uses source snapshot `0fc6bf9a7` with SHA-256
+`47ac4d287646b42b808680e2be422e4a7a7bf62dcd928b6ae911bf4a2c91bbe4`;
+both snapshots are retained at `/browser-sources/`. This does not mean that
+the desktop candidate itself has been deployed.
 The running relay's source snapshot is commit `05e70e3b0` with SHA-256
 `6031d72c1c102de2260a634e9e1b8b559f8cccf292b6512e9270e348f2df5ef9`.
 The engine's built output and generated archives do not belong in Git.

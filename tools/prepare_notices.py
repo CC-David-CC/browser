@@ -19,6 +19,7 @@ SOURCES={
  'emscripten-6.0.1-patched-source.tar.zst':'0ef04153b359fc83a6222c44aebeb32b9ad96e36362720c958f0d2e97b7ad818',
  'wisp-js-0.4.1-source.tar.zst':'3f5ed9fd60dfab9fecef30ce6877f436eb4895a096873e551c2fb4cb13f08557',
  'codi-browser-source-59dfaf024.tar.zst':'00e499a9c5e8c812666616023f4d02e98f49696b7fc7d85040123a93ebe0ea34',
+ 'codi-browser-source-0fc6bf9a7.tar.zst':'47ac4d287646b42b808680e2be422e4a7a7bf62dcd928b6ae911bf4a2c91bbe4',
  'codi-relay-source-05e70e3b0.tar.zst':'6031d72c1c102de2260a634e9e1b8b559f8cccf292b6512e9270e348f2df5ef9',
 }
 FIREFOX_LICENSE_SHA='e84624c9655b7d4d28a35e1539fdba8420b141ed4d12c791ab7a53e996a84701'
