@@ -34,9 +34,14 @@ The desktop release candidate uses source snapshot `0fc6bf9a7` with SHA-256
 `47ac4d287646b42b808680e2be422e4a7a7bf62dcd928b6ae911bf4a2c91bbe4`;
 the newer candidate uses source snapshot `adece7482`, SHA-256
 `2e64c1c3856f622af986157059eca6f8f14a8c73e275829d397372b70701c127`.
-All three snapshots are retained at `/browser-sources/`. This does not mean
-that either desktop candidate has been deployed.
-The running relay's source snapshot is commit `05e70e3b0` with SHA-256
+These snapshots are retained at `/browser-sources/`. This does not mean
+that either desktop candidate has been deployed. The newer snapshot
+`codi-browser-source-2ed6d0259.tar.zst`, SHA-256
+`49f1c63f6160a58d9d6624d5baa35589fae1a74580f32cbb8883f71f9a203b0b`,
+includes the currently running relay sources from commit `6078c8e18` and
+the current tracked Browser app. It was downloaded from the public route
+and hash-verified after publication. The older relay snapshot at commit
+`05e70e3b0` remains available, SHA-256
 `6031d72c1c102de2260a634e9e1b8b559f8cccf292b6512e9270e348f2df5ef9`.
 The engine's built output and generated archives do not belong in Git.
 
@@ -64,3 +69,6 @@ undefined symbols found no defined SoundTouch implementation: the fourteen
 no defined `avcodec_`, `avformat_`, `avutil_` or SoundTouch symbols in the same
 inspection. This is evidence about these symbols, not a complete link inventory
 or a legal conclusion. Complete linked-component and LGPL review still remains.
+The Mozilla build in this pinned revision does not recognize `mach sbom`;
+the current upstream SBOM documentation describes a newer tooling capability,
+so its output cannot be assumed to describe this build.
