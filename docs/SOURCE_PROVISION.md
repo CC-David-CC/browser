@@ -503,3 +503,32 @@ missing entry nor a notice heading alone proves a dependency's absence or
 complete legal compliance. The disposable 3.2 GiB library and 316 MiB map
 were removed after recording their hashes and compact summary; reproduce them
 from the pinned build inputs and documented relink transformation if needed.
+
+A separate isolated final Browser engine relink added a linker map while using
+the same v3 native sources and retained build inputs. Its generated WASM was
+byte-for-byte identical to the live engine, SHA-256
+`4da6079da4a9bf6d1d48701895935bb97f3cfc197db38a771f693705c6d64ba3`.
+The final map SHA-256 was
+`5697e6e675004edb8cb32f5ec964d63b7596881353d291e1b46c711cf9d9f699`.
+The intermediate relocatable map was independently regenerated and matched
+its earlier SHA-256 `2683bbc21bc944cd4df6bd158dd0469be4be8a01c479dfe2f4b209e1362fa6b0`.
+
+`tools/join_gecko_final_maps.py` checks those map hashes, the exact WASM, and
+the Rust archive inventory, then joins final libxul symbol names to source
+objects in the intermediate map. Of 538,649 distinct final libxul symbol
+names, 535,694 matched at least one intermediate entry; 2,955 did not. There
+were 637 matched names with more than one package/input category as a
+possible origin. The unambiguous matches include 315 Rust package names:
+195 with vendored manifests, 115 with other tracked manifests, and five Rust
+toolchain names. Some package names also have ambiguous matches. The compact
+summary SHA-256 is
+`8de3a1c7a0c07ed9d07c3032dde1275b71cc82a62aa57e2bc2a0a517ac4d8ac7`.
+
+This is direct symbol-name evidence, not a complete final-link inventory or
+legal conclusion. Symbols can be inlined, renamed, folded, or attributed to
+more than one input; unmatched names remain unresolved. In particular, a
+package with no direct match is not proven absent. The final map contained no
+`liblgpllibs`, `libfreebl3`, or `SoundTouch` text; text absence alone also does
+not prove the absence of every related component. The existing notices and
+source provisions remain available to signed-in users. Temporary map and
+relink artifacts were removed after the compact result and hashes were saved.
