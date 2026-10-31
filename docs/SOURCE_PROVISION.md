@@ -46,7 +46,7 @@ and hash-verified after publication. The older relay snapshot at commit
 The engine's built output and generated archives do not belong in Git.
 
 The notice page provides the generated Gecko license inventory, Emscripten
-runtime notices, Wisp AGPL and adapter MIT text, and links to the pinned
+runtime notices, Liberation Sans font license, Wisp AGPL and adapter MIT text, and links to the pinned
 archives. `tools/prepare_notices.py` reconstructs that page from the exact
 build inputs. Mozilla's
 [MPL 2.0 distribution terms](https://www.mozilla.org/en-US/MPL/2.0/) and
@@ -72,3 +72,19 @@ or a legal conclusion. Complete linked-component and LGPL review still remains.
 The Mozilla build in this pinned revision does not recognize `mach sbom`;
 the current upstream SBOM documentation describes a newer tooling capability,
 so its output cannot be assumed to describe this build.
+
+The built `gecko.data` stages four Liberation Sans TTF files from Firefox's
+PDF.js tree. Their upstream `LICENSE_LIBERATION` (SIL OFL 1.1) matches pinned
+source SHA-256 `93fed46019c38bbe566b479d22148e2e8a1e85ada614accb0211c37b2c61c19b`.
+The exact notice is now included at `/browser-sources/emscripten-licenses.txt`;
+the public response was hash-checked after publication. Notice generation
+requires this exact license input.
+
+The upstream link script explicitly links the embedder, libxul, libnss3,
+libgkcodecs and Mozilla glue; its GRE staging script excludes shared libraries,
+WASM files and dictionaries. The built but separately present `liblgpllibs.so`
+and `libmozavcodec.so` contain SoundTouch and FFmpeg symbols respectively,
+whereas the staged linked libraries do not define those implementations.
+This is further evidence that those libraries were not linked by this script;
+it does not replace a full inventory of every compiled component or settle
+the remaining license review.

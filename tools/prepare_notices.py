@@ -25,6 +25,7 @@ SOURCES={
  'codi-relay-source-05e70e3b0.tar.zst':'6031d72c1c102de2260a634e9e1b8b559f8cccf292b6512e9270e348f2df5ef9',
 }
 FIREFOX_LICENSE_SHA='e84624c9655b7d4d28a35e1539fdba8420b141ed4d12c791ab7a53e996a84701'
+LIBERATION_LICENSE_SHA='93fed46019c38bbe566b479d22148e2e8a1e85ada614accb0211c37b2c61c19b'
 EMS_LICENSES=('LICENSE','system/lib/libunwind/LICENSE.TXT','system/lib/mimalloc/LICENSE',
               'system/lib/libc/musl/COPYRIGHT','system/lib/libcxx/LICENSE.TXT',
               'system/lib/compiler-rt/LICENSE.TXT','system/lib/llvm-libc/LICENSE.TXT',
@@ -38,12 +39,13 @@ def sha(path):
     return h.hexdigest()
 def member(archive,name):
     return subprocess.run(['tar','--zstd','-xOf',str(archive),name],check=True,capture_output=True).stdout
-def prepare(firefox_license,emscripten,wisp,adapter_license,out):
+def prepare(firefox_license,emscripten,wisp,adapter_license,liberation_license,out):
     out=Path(out).absolute()
     if out.exists() or out.is_symlink() or not out.parent.is_dir():raise ValueError('New output directory required')
     if sha(firefox_license)!=FIREFOX_LICENSE_SHA:raise ValueError('Firefox notice is not from the pinned build')
     if sha(emscripten)!=SOURCES['emscripten-6.0.1-patched-source.tar.zst']:raise ValueError('Wrong Emscripten source archive')
     if sha(wisp)!=SOURCES['wisp-js-0.4.1-source.tar.zst']:raise ValueError('Wrong Wisp source archive')
+    if sha(liberation_license)!=LIBERATION_LICENSE_SHA:raise ValueError('Wrong Liberation Sans font license')
     raw=Path(firefox_license).read_text(encoding='utf-8')
     # Retain the license text; make Firefox-internal links usable as a normal
     # same-origin webpage and remove Firefox-only stylesheet references.
@@ -53,11 +55,12 @@ def prepare(firefox_license,emscripten,wisp,adapter_license,out):
     for name in EMS_LICENSES:
         data=member(emscripten,'emscripten/'+name).decode('utf-8')
         ems.append('===== emscripten/'+name+' =====\n'+data.rstrip()+'\n')
+    ems.append('===== Liberation Sans fonts: SIL Open Font License 1.1 =====\n'+Path(liberation_license).read_text(encoding='utf-8').rstrip()+'\n')
     license_wisp=member(wisp,'LICENSE');adapter=Path(adapter_license).read_bytes()
     links='\n'.join('<li><a href="'+html.escape(name,quote=True)+'">'+html.escape(name)+'</a><br><code>SHA-256 '+value+'</code></li>' for name,value in SOURCES.items())
     index='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Browser licenses and source</title></head><body><main><h1>Browser licenses and source</h1>
 <p>The Browser uses a locally built Firefox/Gecko WebAssembly port and the Wisp client. These notices and source snapshots correspond to the build offered by this site.</p>
-<h2>License notices</h2><ul><li><a href="firefox-licenses.html">Firefox and bundled component notices</a></li><li><a href="emscripten-licenses.txt">Emscripten and runtime notices</a></li><li><a href="wisp-license.txt">Wisp client: GNU AGPL 3.0</a></li><li><a href="adapter-license.txt">Browser adapter: MIT license</a></li></ul>
+<h2>License notices</h2><ul><li><a href="firefox-licenses.html">Firefox and bundled component notices</a></li><li><a href="emscripten-licenses.txt">Emscripten, runtime and Liberation Sans font notices</a></li><li><a href="wisp-license.txt">Wisp client: GNU AGPL 3.0</a></li><li><a href="adapter-license.txt">Browser adapter: MIT license</a></li></ul>
 <h2>Source code</h2><p>The Firefox-WASM base, local patch and added native file together represent the modified wrapper. The Emscripten snapshot includes the build's patched sources. Large archives download only when selected.</p><ul>'''+links+'''</ul>
 <p>IP geolocation data: <a href="https://db-ip.com">IP Geolocation by DB-IP</a>.</p></main></body></html>\n'''
     out.mkdir(mode=0o755)
@@ -72,7 +75,7 @@ def prepare(firefox_license,emscripten,wisp,adapter_license,out):
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
-    for name in ('firefox-license','emscripten','wisp','adapter-license','out'):p.add_argument('--'+name,type=Path,required=True)
+    for name in ('firefox-license','emscripten','wisp','adapter-license','liberation-license','out'):p.add_argument('--'+name,type=Path,required=True)
     a=p.parse_args()
-    try:print(json.dumps(prepare(a.firefox_license,a.emscripten,a.wisp,a.adapter_license,a.out),indent=2))
+    try:print(json.dumps(prepare(a.firefox_license,a.emscripten,a.wisp,a.adapter_license,a.liberation_license,a.out),indent=2))
     except (ValueError,OSError,subprocess.CalledProcessError) as error:p.error(str(error))
