@@ -11,7 +11,9 @@ export function mount(host) {
   const body=host.ui.make('div','window-content');
   const doc=body.ownerDocument;
   const usageOwner=host.storage?.signedInSubject?.();
-  body.style.cssText='height:100%;min-height:0;display:flex;flex-direction:column;';
+  // The desktop sizes window-content below its title bar. Overriding that
+  // height with 100% clips the status and diagnostics at the window bottom.
+  body.style.cssText='min-height:0;display:flex;flex-direction:column;';
   // Shadow DOM scopes OUR chrome styles only. It does not render guest content
   // and is not claimed as a security boundary.
   const root=body.attachShadow({mode:'open'});
@@ -79,7 +81,7 @@ export function mount(host) {
   }
   async function operation(type,payload={}) {
     const s=instance,g=generation;if(!s||s.state!=='ready')return;
-    try{await s.request(type,payload);if(current(s,g)&&type!=='control')setStatus('Loading…');}
+    try{setStatus('Loading…');await s.request(type,payload);if(current(s,g))setStatus(payload.action==='stop'?'Stopped.':'Navigation requested.');}
     catch(e){if(current(s,g))report(e);}
   }
   function applySize(){
