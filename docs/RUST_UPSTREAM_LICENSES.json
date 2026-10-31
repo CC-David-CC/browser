@@ -1,0 +1,265 @@
+{
+  "description": "Upstream license files at revisions identified by checksum-verified Cargo packages or pinned git dependencies. This is a conservative target-build set, not an exact final-link inventory.",
+  "sources": [
+    {
+      "files": [
+        {
+          "path": "license/MIT",
+          "sha256": "f7f8c47f3fc949cf8d037fcb876a3031346ff5e363d3c0eead23540547e11401"
+        },
+        {
+          "path": "license/APACHE",
+          "sha256": "d7b3ad3a0671f9ba97f0ac7890ed55c82ab7e3d2abbee310ea75d6de3d05a6ca"
+        }
+      ],
+      "packages": [
+        "arraystring 0.3.0"
+      ],
+      "repository": "https://github.com/paulocsanz/arraystring",
+      "revision": "fef7dea5815887ea55288868f8b80a3ba77c1386"
+    },
+    {
+      "files": [
+        {
+          "path": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "path": "LICENSE-MIT",
+          "sha256": "4ad721b5b6a3d39ca3e2202f403d897c4a1d42896486dd58963a81f8e64ef61d"
+        }
+      ],
+      "packages": [
+        "bhttp 0.7.2"
+      ],
+      "repository": "https://github.com/martinthomson/ohttp",
+      "revision": "af304a6d34fd93facbf7094bcd5c132c94b27e03"
+    },
+    {
+      "files": [
+        {
+          "path": "LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ],
+      "packages": [
+        "flatbuffers 25.12.19"
+      ],
+      "repository": "https://github.com/google/flatbuffers",
+      "revision": "7e163021e59cca4f8e1e35a7c828b5c6b7915953"
+    },
+    {
+      "files": [
+        {
+          "path": "LICENSE",
+          "sha256": "b40930bbcf80744c86c46a12bc9da056641d722716c378f5659b9e555ef833e1"
+        }
+      ],
+      "packages": [
+        "fluent-langneg 0.13.0"
+      ],
+      "repository": "https://github.com/projectfluent/fluent-langneg-rs",
+      "revision": "29007f8d453b931b79544566b1037865bfa7fb12"
+    },
+    {
+      "files": [
+        {
+          "path": "intl_pluralrules/LICENSE-APACHE",
+          "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+        },
+        {
+          "path": "intl_pluralrules/LICENSE-MIT",
+          "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+        }
+      ],
+      "packages": [
+        "intl_pluralrules 7.0.2"
+      ],
+      "repository": "https://github.com/zbraniecki/pluralrules",
+      "revision": "d0715d5b7cca72e228d6e6c4de154bd30dfdd06a"
+    },
+    {
+      "files": [
+        {
+          "path": "LICENSE",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5"
+        }
+      ],
+      "packages": [
+        "jexl-eval 0.4.0",
+        "jexl-parser 0.4.0"
+      ],
+      "repository": "https://github.com/mozilla/jexl-rs",
+      "revision": "efe23f87dda019043ced44228712fb59228c28a0"
+    },
+    {
+      "files": [
+        {
+          "path": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "path": "LICENSE-MIT",
+          "sha256": "73cb5f952615bc21d11487cd7e0cf091967cc71d2e7d6cb93f96b36d47b250ed"
+        }
+      ],
+      "packages": [
+        "lalrpop-util 0.19.12"
+      ],
+      "repository": "https://github.com/lalrpop/lalrpop",
+      "revision": "03108cebd272111a3f296b0ee6dca12f0cd332c2"
+    },
+    {
+      "files": [
+        {
+          "path": "LICENSE-apache",
+          "sha256": "d551fe3f3458b1427b7cfdf5a62692f2889c4fc12e189239927f9b48abcf9a21"
+        },
+        {
+          "path": "LICENSE-mit",
+          "sha256": "b48721bb3ba9bb06d6706c041f59c04175ca4df541e635beb124b2dad3ae7743"
+        }
+      ],
+      "packages": [
+        "mls-rs 0.54.0"
+      ],
+      "repository": "https://github.com/awslabs/mls-rs",
+      "revision": "f699f56c189f71da16e12d29f38a016a37c3aac3"
+    },
+    {
+      "files": [
+        {
+          "path": "LICENSE-apache",
+          "sha256": "d551fe3f3458b1427b7cfdf5a62692f2889c4fc12e189239927f9b48abcf9a21"
+        },
+        {
+          "path": "LICENSE-mit",
+          "sha256": "b48721bb3ba9bb06d6706c041f59c04175ca4df541e635beb124b2dad3ae7743"
+        }
+      ],
+      "packages": [
+        "mls-rs-codec 0.7.0"
+      ],
+      "repository": "https://github.com/awslabs/mls-rs",
+      "revision": "3a185cd2cf4c89c3cd30adf294d7c18d2735725e"
+    },
+    {
+      "files": [
+        {
+          "path": "LICENSE-apache",
+          "sha256": "d551fe3f3458b1427b7cfdf5a62692f2889c4fc12e189239927f9b48abcf9a21"
+        },
+        {
+          "path": "LICENSE-mit",
+          "sha256": "b48721bb3ba9bb06d6706c041f59c04175ca4df541e635beb124b2dad3ae7743"
+        }
+      ],
+      "packages": [
+        "mls-rs-core 0.26.0",
+        "mls-rs-crypto-hpke 0.20.0",
+        "mls-rs-crypto-traits 0.21.0",
+        "mls-rs-identity-x509 0.20.0"
+      ],
+      "repository": "https://github.com/awslabs/mls-rs",
+      "revision": "027d9051437f88b81f4214c5a0a3a8fd7bbb8501"
+    },
+    {
+      "files": [
+        {
+          "path": "LICENSE",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5"
+        }
+      ],
+      "packages": [
+        "origin-trial-token 0.1.1"
+      ],
+      "repository": "https://github.com/mozilla/origin-trial-token",
+      "revision": "9307e0f38e106b674e2cfa1ae4bc35ef3ef586ba"
+    },
+    {
+      "files": [
+        {
+          "path": "LICENCE-APACHE",
+          "sha256": "c6c8c9dbe29fb4d68d829c7a402f9f6baae3472ecf107cc2a57c75a9a8d1b85c"
+        },
+        {
+          "path": "LICENCE-MIT",
+          "sha256": "db264505cb1856383e255c8373da9e5aeadc1cd92b570fcc94fd1fb7d892db78"
+        }
+      ],
+      "packages": [
+        "remove_dir_all 0.5.3"
+      ],
+      "repository": "https://github.com/XAMPPRocky/remove_dir_all",
+      "revision": "0c218dad77262fbf47483d128feebb2770a8c05e"
+    },
+    {
+      "files": [
+        {
+          "path": "LICENSE",
+          "sha256": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5"
+        }
+      ],
+      "packages": [
+        "uniffi 0.31.0",
+        "uniffi_core 0.31.0",
+        "uniffi_pipeline 0.31.0"
+      ],
+      "repository": "https://github.com/mozilla/uniffi-rs",
+      "revision": "309762f55db3f0548194a9ceba3027fa64b18a93"
+    },
+    {
+      "files": [
+        {
+          "path": "mls-platform-api/LICENSE-apache",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        },
+        {
+          "path": "mls-platform-api/LICENSE-mit",
+          "sha256": "929fb738c9a0bc0c816ec321b201c23b8980a9f161f88e85341d1fd0e5c075b3"
+        }
+      ],
+      "packages": [
+        "mls-rs-crypto-nss 0.2.1",
+        "mls-rs-provider-sqlite 0.22.0"
+      ],
+      "repository": "https://github.com/mozilla/mls-platform-api",
+      "revision": "2a2e344019bfc76b7e566ee6e0549cf668d90127"
+    },
+    {
+      "files": [
+        {
+          "path": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "path": "LICENSE-MIT",
+          "sha256": "4ad721b5b6a3d39ca3e2202f403d897c4a1d42896486dd58963a81f8e64ef61d"
+        }
+      ],
+      "packages": [
+        "neqo crates 0.29.0"
+      ],
+      "repository": "https://github.com/mozilla/neqo",
+      "revision": "18832752db4700df4bdbb26f655b675931b234ac"
+    },
+    {
+      "files": [
+        {
+          "path": "LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "path": "LICENSE-MIT",
+          "sha256": "4ad721b5b6a3d39ca3e2202f403d897c4a1d42896486dd58963a81f8e64ef61d"
+        }
+      ],
+      "packages": [
+        "ohttp 0.7.2"
+      ],
+      "repository": "https://github.com/martinthomson/ohttp",
+      "revision": "600931b5a1e947776cbaad931ed78f1e89005352"
+    }
+  ],
+  "version": "codi-rust-upstream-notices/1"
+}
