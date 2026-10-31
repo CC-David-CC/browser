@@ -43,6 +43,7 @@ SOURCES={
  'codi-browser-source-f15af44a6.tar.zst':'27e670c3bdae08bfe550ca6d732fc483e22d5ca50704f3d18b26ec7f02b01d27',
  'codi-browser-source-8a7a3c43d.tar.zst':'ecf9e1526400f863291849c8ddbb4594c6534fcc1ec070ba629d2e63a1dbd8de',
  'codi-browser-source-7bc6719ed.tar.zst':'4fe52eaa8a8c2450fae3683845eaa4480ab045e2f5f28faf4a2a40a69a049c80',
+ 'codi-browser-source-7092c2e0d-scroll.tar.zst':'bb21975085ee8552ac16c428a59c83aa014be955b18742e0336f37f0b5703cae',
  'codi-relay-source-05e70e3b0.tar.zst':'6031d72c1c102de2260a634e9e1b8b559f8cccf292b6512e9270e348f2df5ef9',
 }
 FIREFOX_LICENSE_SHA='e84624c9655b7d4d28a35e1539fdba8420b141ed4d12c791ab7a53e996a84701'
