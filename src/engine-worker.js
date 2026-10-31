@@ -4,7 +4,7 @@
 let moduleInstance=null, mailbox=null, ready=false, dead=false, starting=false;
 let hasDocument=false;
 let config=null, width=960, height=640, visible=true, frameOutstanding=false;
-let frameSeq=0, queue=[], pumping=false, timer=0, lastStatus=0, pageSeq=0;
+let frameSeq=0, queue=[], pumping=false, timer=0, lastStatus=0, pageSeq=0, activeNavigationEpoch=0;
 let guestDownloads=null, downloadTimer=0, downloadScanFailed=false;
 const abort=new AbortController(), connections=new Set(), blobURLs=[];
 const libraries=Promise.all([import('./mailbox.mjs'),import('./policy.mjs'),import('./guest-downloads.mjs'),import('./download-resources.mjs')]);
@@ -79,12 +79,13 @@ async function init(payload){
       create_stream(hostname,port,...rest){
         const stream=super.create_stream(hostname,port,...rest);
         stream.codiDestination=typeof hostname==='string'?hostname.slice(0,253):'';
+        stream.codiNavigationEpoch=activeNavigationEpoch;
         event('domain-use',{hostname});
         return stream;
       }
       close_stream(stream,reason){
-        if(reason===0x48)event('network-blocked',{hostname:stream.codiDestination});
-        else if(reason===0x49)event('network-throttled',{});
+        if(reason===0x48)event('network-blocked',{hostname:stream.codiDestination,navigationEpoch:stream.codiNavigationEpoch});
+        else if(reason===0x49)event('network-throttled',{navigationEpoch:stream.codiNavigationEpoch});
         return super.close_stream(stream,reason);
       }
     };
@@ -189,6 +190,10 @@ async function native(c){
 async function run(type,payload){
   const [{OP},policy]=await libraries;
   if(!ready)throw new Error('Engine is not ready.');
+  if(['navigate','open-html','control'].includes(type) && payload.navigationEpoch!==undefined){
+    if(!Number.isSafeInteger(payload.navigationEpoch)||payload.navigationEpoch<0)throw new Error('Invalid navigation epoch.');
+    activeNavigationEpoch=payload.navigationEpoch;
+  }
   switch(type){
     case 'navigate':{
       const url=policy.normalizeNavigation(payload.url);

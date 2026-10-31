@@ -87,7 +87,7 @@ export function mount(host) {
   async function operation(type,payload={},transfer=[]) {
     const s=instance,g=generation;if(!s||s.state!=='ready')return;
     const epoch=++navigationEpoch;pendingNavigation=epoch;
-    try{networkNotice='';setNavigationStatus('Loading…');await s.request(type,payload,undefined,transfer);if(current(s,g)&&epoch===navigationEpoch){pendingNavigation=0;if(networkNotice)setStatus(networkNotice);else setNavigationStatus(payload.action==='stop'?'Stopped.':'Navigation requested.');}}
+    try{networkNotice='';setNavigationStatus('Loading…');await s.request(type,{...payload,navigationEpoch:epoch},undefined,transfer);if(current(s,g)&&epoch===navigationEpoch){pendingNavigation=0;if(networkNotice)setStatus(networkNotice);else setNavigationStatus(payload.action==='stop'?'Stopped.':'Navigation requested.');}}
     catch(e){if(current(s,g)&&epoch===navigationEpoch){pendingNavigation=0;report(e);}}
   }
   function applySize(){
@@ -129,8 +129,10 @@ export function mount(host) {
           }catch(e){report(e);s.fail(e);}
           finally{s.notify('frame-ack',{seq:m.seq});}
         }else if(m.type==='network-blocked'){
+          if(m.navigationEpoch!==navigationEpoch)return;
           networkNotice='The site or one of its resources was blocked by the server network policy'+(m.hostname?' ('+String(m.hostname).slice(0,253)+').':'.');setStatus(networkNotice);
         }else if(m.type==='network-throttled'){
+          if(m.navigationEpoch!==navigationEpoch)return;
           networkNotice='Browser network connection limit reached. Try again shortly.';setStatus(networkNotice);
         }else if(m.type==='download-start'){
           if(typeof m.name!=='string'||typeof m.id!=='string'||downloadRows.has(m.id))return;
