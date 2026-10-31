@@ -35,6 +35,12 @@ HTTP 404 nevertheless returned a zero Gecko network result, so that result
 cannot by itself indicate a successful HTTP page. The prototype is unshipped;
 see `experiments/README.md` for evidence and remaining checks.
 
+Another unshipped prototype read the HTTP channel and distinguished a fixture
+200, 404 and redirect to 404. A separate slow-response test with the shipping
+engine showed that Stop remained queued during the first four seconds of a
+ten-second response delay. It needs a responsive cancellation path before Stop
+can be relied on during a stalled navigation.
+
 ## Historical source handoff 0.1.0
 
 The following report describes the earlier source-only handoff and is retained

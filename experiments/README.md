@@ -26,3 +26,19 @@ Next, investigate HTTP channel response status and request association, test
 redirects, cancellation, DNS/TLS failures, multiple rapid navigations, and avoid
 exposing path/query metadata outside what the UI needs. Only then consider a
 new engine build, source publication and live rollout.
+
+The later `navigation-http-debug.patch` also queries the HTTP channel. An
+isolated real Gecko/Wisp test observed 200, 404, and the final 404 after an
+HTTP redirect. The candidate remains diagnostic, exposes full request names,
+and is not deployed. It has not established correct handling of rapid
+navigations, TLS failures or every redirect shape.
+
+The same local fixture exposed a separate limitation in the **shipping**
+engine: while an HTTP response was delayed for ten seconds, clicking Stop did
+not complete during the first four seconds and the status remained “Loading…”.
+The engine command queue processes one native call at a time; `xul_load` spins
+until a new document becomes interactive, so the Stop command waits behind
+that call. A responsive cancellation mechanism needs coordination between the
+worker and native loop; do not assume that a progress-listener change fixes it.
+The local fixture deliberately maps a test hostname to loopback and must never
+be deployed as a production relay.
