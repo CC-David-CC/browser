@@ -91,6 +91,25 @@ class WispRelayTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn(((2,2),b'fallback'),[await self.read(ws),await self.read(ws)])
             self.assertEqual(attempts,['2606:4700:4700::1111','1.1.1.1'])
 
+    async def test_dns_rebinding_and_mixed_answers_cannot_reach_private_addresses(self):
+        # Each new stream performs a fresh check, and the connector receives the
+        # vetted numeric address rather than a hostname it could resolve again.
+        answers=iter((['1.1.1.1'],['127.0.0.1'],['2606:4700:4700::1111','::1'],['::ffff:127.0.0.1']))
+        async def resolve(name,port):
+            self.calls.append(name)
+            return next(answers)
+        self.relay.resolver=resolve
+        url=f'http://127.0.0.1:{self.port}/wisp/'
+        async with self.client.ws_connect(url,headers={'Origin':'http://127.0.0.1','X-Test-Auth':'registered'}) as ws:
+            await self.read(ws);destination=bytes([1])+struct.pack('<H',443)+b'grainger.com'
+            await ws.send_bytes(self.pkt(1,1,destination));await ws.send_bytes(self.pkt(2,1,b'public'))
+            self.assertIn(((2,1),b'public'),[await self.read(ws),await self.read(ws)])
+            for stream in (2,3,4):
+                await ws.send_bytes(self.pkt(1,stream,destination))
+                self.assertEqual(await self.read(ws),((4,stream),b'\x48'))
+            self.assertEqual(self.calls,['grainger.com']*4)
+            self.assertEqual(self.connections,[('1.1.1.1',443)])
+
     async def test_slow_connection_does_not_stall_other_streams(self):
         release=asyncio.Event()
         async def resolve(name,port):
