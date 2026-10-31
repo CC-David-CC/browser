@@ -4,6 +4,8 @@ On box-webhost, `sudo codi-browser-policy` edits the root-owned policy files
 with a lock, validates each result against the running relay's pinned policy
 code, and replaces the file atomically. Changes apply to new connections;
 outbound blocks also stop an active Browser stream when traffic next flows.
+The operator is pinned to the current relay's validation code. When upgrading
+that relay, review and update the operator pin if its policy schema changes.
 
 ```sh
 # Inspect independent incoming-login and outbound IP/country lists.
