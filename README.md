@@ -107,7 +107,7 @@ this source file is its starting template, not the active operator copy.
 
 The source relay also rejects IPv4-mapped IPv6 and the well-known NAT64,
 local-use NAT64, 6to4 and Teredo ranges: an embedded IPv4 address could
-otherwise evade IPv4 destination rules. This change is pending deployment.
+otherwise evade IPv4 destination rules. This change is deployed on ksu.codes.
 Ordinary public IPv6 remains supported. A network-specific NAT64 prefix cannot
 be recognized from an address alone; operators must block any such configured
 prefix separately or avoid using a translation route for relay traffic.
