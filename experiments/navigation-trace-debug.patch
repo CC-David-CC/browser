@@ -1,0 +1,74 @@
+--- a/embed-host.cpp
++++ b/embed-host.cpp
+@@ -4,6 +4,8 @@
+  */
+ #include "embed-xul.h"
+ #include <cstddef>
++#include "nsWeakReference.h"
++#include "nsIHttpChannel.h"
+ 
+ static_assert(sizeof(void*) == 4, "This mailbox ABI requires wasm32");
+ static_assert(offsetof(XulCmd, url) == 20, "ABI drift: url");
+@@ -26,8 +28,53 @@
+   out+='"'; return out;
+ }
+ 
++class BrowserProgressListener final : public nsIWebProgressListener, public nsSupportsWeakReference {
++ public:
++  NS_DECL_ISUPPORTS
++  NS_DECL_NSIWEBPROGRESSLISTENER
++ private:
++  ~BrowserProgressListener() = default;
++};
++NS_IMPL_ISUPPORTS(BrowserProgressListener, nsIWebProgressListener, nsISupportsWeakReference)
++static nsCOMPtr<nsIWebProgressListener> sProgressListener;
++static int sLoadState = 0;
++static nsresult sLoadResult = NS_OK;
++static uint32_t sHttpStatus = 0;
++static uint32_t sEvents = 0, sStarts = 0, sStops = 0, sFlags = 0;
++static nsCString sRequestName;
++static nsCString sTrace;
++NS_IMETHODIMP BrowserProgressListener::OnStateChange(nsIWebProgress* progress, nsIRequest* request, uint32_t flags, nsresult status) {
++  ++sEvents; sFlags = flags; if (flags & STATE_START) ++sStarts; if (flags & STATE_STOP) ++sStops;
++  // Never record requested URLs or page contents in the diagnostic trace.
++  bool top = false;
++  if (!progress || NS_FAILED(progress->GetIsTopLevel(&top)) || !top || !(flags & STATE_IS_NETWORK)) return NS_OK;
++  uint32_t httpCode=0;
++  nsCOMPtr<nsIHttpChannel> channel=do_QueryInterface(request);
++  if (channel) channel->GetResponseStatus(&httpCode);
++  char row[160];
++  snprintf(row,sizeof(row),"[request=%u flags=%u result=%u http=%u]",static_cast<unsigned>(reinterpret_cast<uintptr_t>(request)),flags,static_cast<unsigned>(status),httpCode);
++  if(sTrace.Length()>3500)sTrace.Cut(0,1000);
++  sTrace.Append(row);
++  if (flags & STATE_START) { sLoadState = 1; sLoadResult = NS_OK; sHttpStatus = 0; }
++  if (flags & STATE_STOP) { sLoadState = 2; sLoadResult = status; nsCOMPtr<nsIHttpChannel> http = do_QueryInterface(request); uint32_t code = 0; if (http && NS_SUCCEEDED(http->GetResponseStatus(&code))) sHttpStatus = code; }
++  return NS_OK;
++}
++NS_IMETHODIMP BrowserProgressListener::OnProgressChange(nsIWebProgress*, nsIRequest*, int32_t, int32_t, int32_t, int32_t) { return NS_OK; }
++NS_IMETHODIMP BrowserProgressListener::OnLocationChange(nsIWebProgress*, nsIRequest*, nsIURI*, uint32_t) { return NS_OK; }
++NS_IMETHODIMP BrowserProgressListener::OnStatusChange(nsIWebProgress*, nsIRequest*, nsresult, const char16_t*) { return NS_OK; }
++NS_IMETHODIMP BrowserProgressListener::OnSecurityChange(nsIWebProgress*, nsIRequest*, uint32_t) { return NS_OK; }
++NS_IMETHODIMP BrowserProgressListener::OnContentBlockingEvent(nsIWebProgress*, nsIRequest*, uint32_t) { return NS_OK; }
++static void AttachProgressListener() {
++  if (sProgressListener || !g_docShell) return;
++  nsCOMPtr<nsIWebProgress> progress = do_GetInterface(g_docShell);
++  if (!progress) return;
++  nsCOMPtr<nsIWebProgressListener> listener = new BrowserProgressListener();
++  if (NS_SUCCEEDED(progress->AddProgressListener(listener, nsIWebProgress::NOTIFY_STATE_NETWORK))) sProgressListener = listener;
++}
++
+ // 0 status, 1 back, 2 forward, 3 reload, 4 stop. Native navigation is authoritative.
+ char* browser_host_control(int action) {
++  AttachProgressListener();
+   nsCOMPtr<nsIWebNavigation> nav=do_QueryInterface(g_docShell);
+   bool canBack=false,canForward=false;
+   nsresult rv=NS_OK;
+@@ -46,7 +93,7 @@
+   } else if(action!=0) rv=NS_ERROR_NOT_AVAILABLE;
+   nsAutoCString url;
+   if(nav) { nsCOMPtr<nsIURI> uri;nav->GetCurrentURI(getter_AddRefs(uri));if(uri)uri->GetSpec(url); }
+-  std::string json="{\"url\":"+JsonText(url)+",\"canGoBack\":"+(canBack?"true":"false")+
++  std::string json="{\"httpStatus\":"+std::to_string(sHttpStatus)+",\"eventCount\":"+std::to_string(sEvents)+",\"starts\":"+std::to_string(sStarts)+",\"stops\":"+std::to_string(sStops)+",\"eventFlags\":"+std::to_string(sFlags)+",\"requestName\":"+JsonText(sTrace)+",\"progress\":"+std::to_string(sLoadState)+",\"progressResult\":"+std::to_string(static_cast<uint32_t>(sLoadResult))+",\"url\":"+JsonText(url)+",\"canGoBack\":"+(canBack?"true":"false")+
+     ",\"canGoForward\":"+(canForward?"true":"false")+",\"ok\":"+(NS_SUCCEEDED(rv)?"true":"false")+"}";
+   char* result=static_cast<char*>(malloc(json.size()+1));
+   if(!result)return nullptr;

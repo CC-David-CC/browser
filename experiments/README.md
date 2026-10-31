@@ -92,3 +92,49 @@ The packed bundle independently passed the delayed-response test in 67 ms;
 live desktop and emulated-phone sessions rendered example.com, and live Stop
 returned in the phone-sized session. The progress-listener prototypes remain
 unshipped; page-completion/error reporting is a separate outstanding issue.
+
+## Event association investigation — 2026-10-31
+
+`navigation-trace-debug.patch` is a local-only diagnostic for the deployed
+ABI v2 source. It records bounded numeric request identifiers, event flags,
+network results and HTTP codes; it does not record request URLs. Do not deploy
+it: the identifiers expose implementation details, and the status API and
+listener lifetime have not been designed for production. The debug build's
+WASM SHA-256 was
+`6763988757faf62ddc583a6ba69ed2ca19f5bad3c777525855de034f8a8660c4`.
+
+`tests/browser-progress-diagnostic-fixture.py` is an explicitly loopback-only
+fake-auth fixture; it must never be exposed as a production relay. The matching
+`tests/browser-progress-diagnostic.test.mjs` exercised real Gecko/Wisp with
+200, 404, an HTTP redirect ending in 404, a script redirect ending in 404,
+Stop during a stalled response, a later successful request, a blocked
+hostname and a deliberately closed TLS connection. All assertions passed.
+
+The observations constrain the design:
+
+- Normal HTTP 200 and 404 both reported network result zero; the latter had
+  HTTP status 404. An HTTP redirect reported the final 404.
+- The start and successful stop events had different request identifiers, so
+  matching those pointers would incorrectly lose successful loads.
+- A script redirect produced a stop with the same cancellation result as an
+  explicit Stop, alongside HTTP 200, before the next request reached 404.
+  Treating every cancellation as a failure would mislabel ordinary redirects.
+- The blocked destination and the closed TLS connection reported the same
+  network result in this fixture. A network result alone cannot identify the
+  cause; preserve the relay's separate, bounded policy-block notification.
+
+The first TLS test timed out because the fixture waited for an HTTP header on
+an incoming TLS connection. It was corrected to close that connection, then
+rerun; the timeout was a fixture defect, not an engine result. Further work
+must associate events with the current top-level navigation, handle overlapping
+and page-initiated navigations, distinguish an explicit Stop from redirect
+cancellation, and avoid exposing request data. Keep the current neutral status
+until those behaviors are verified.
+
+For reproducibility, apply the diagnostic patch only in a clean, isolated
+copy of the native source, rebuild and stage a matched engine with the pinned
+build tools, then use `tests/prepare-browser-progress-diagnostic.py --engine
+STAGED_ENGINE --out NEW_DIRECTORY`. Set `CODI_EXPERIMENT_APP` to that output
+and run the fixture, then run the diagnostic test with Puppeteer and a local
+Chrome debugging endpoint on port 19255. The preparation script adds
+instrumentation only to the copied worker and verifies its source anchors.
