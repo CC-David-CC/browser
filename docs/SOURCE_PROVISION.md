@@ -96,3 +96,18 @@ whereas the staged linked libraries do not define those implementations.
 This is further evidence that those libraries were not linked by this script;
 it does not replace a full inventory of every compiled component or settle
 the remaining license review.
+
+The actual `toolkit/library/build/libxul_so.list` contains 1,860 object
+entries. Its identifiable third-party groups include ICU, Abseil, msgpack,
+zstd, dav1d, libjpeg, libmkv, libnestegg, libpng, speex resampler, libwebp,
+libyuv, and libcubeb. ICU's notice is in the generated Firefox notice page.
+To avoid relying on generic license headings for the other named libraries,
+the public runtime notice file now also includes their license files from the
+exact pinned Firefox revision, including both libjpeg-turbo's license and the
+IJG README it references. `tools/collect_component_notices.py` recreates this
+set; SHA-256 of its output is
+`85201fadf7d77201dc1d8c026f0340ecd6b258f6d63fe339486a200d3e377dde`.
+The public combined notices match SHA-256
+`4d04c982f8713a75b6c787679e0f93ff7ac076b08c5fd5ce0d82da515bf6d35e`.
+This group-level review is not a complete audit of all 1,860 object inputs,
+Rust dependencies, generated resources, or downstream legal requirements.
