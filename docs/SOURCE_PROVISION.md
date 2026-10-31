@@ -124,6 +124,18 @@ the served combined notice hashes to
 This identifies a linked input, not proof that its code survived final-link
 elimination, and does not establish a complete inventory.
 
+`tools/inventory_unified_link_inputs.py` expands the generated unified source
+files named by the exact `libxul_so.list`, verifying its SHA-256 and the
+Firefox revision before reporting per-object source hashes and inclusions. On
+the retained build it found 625 unified objects, 5,744 include references and
+no missing included files. The explicitly named `third_party` paths are
+Abseil (127 references), libevent (20), zstd (12), and Content Analysis SDK
+(2). Abseil, zstd and the SDK are in the combined notice; Firefox's license
+page includes libevent. The full generated JSON report had SHA-256
+`e62a202ca096f401ee3c6b73056afe4810be699d9c03250f1f966434ff9a90e6`.
+This covers only explicit generated includes, not transitive headers, other
+link inputs, resources, or proof of retained code in the final WASM.
+
 The actual target Cargo fingerprint directory contains 477 distinct names;
 335 match vendored Rust package names. `tools/collect_rust_notices.py` collects
 the declared licenses and available license/notice files for all matching
