@@ -1,5 +1,9 @@
 # Browser engine source provision, 2026-10-30
 
+Current access: sign in, open Browser, and select **Licenses & source**.
+Direct `/browser-sources/` URLs in older notes below are historical and require
+the signed-in source route instead.
+
 The Gecko engine is built from Firefox-WASM `bc69aaa5e2c5388bcf93a43b975b490bb940f4c0`,
 with the local modifications applied by `tools/patch_engine.py`, and Firefox
 `2e1e835a5da5907e5ceef19aade58a7493f1e34d`. The Firefox checkout was clean

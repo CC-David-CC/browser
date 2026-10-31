@@ -17,5 +17,6 @@ The build may stage resources from the upstream GRE. Review resource licenses be
 
 For the current pinned build, the Gecko-generated component notices,
 Emscripten/runtime notices, Wisp license, adapter license, and matching source
-snapshots are available at `https://ksu.codes/browser-sources/`. See
+snapshots are available by signing in and choosing **Licenses & source** in
+Browser. See
 `SOURCE_PROVISION.md` for hashes and the remaining linked-component review.
