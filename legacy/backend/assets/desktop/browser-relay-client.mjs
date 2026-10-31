@@ -2,6 +2,7 @@
 import {hash,signJws,inspectJws,verifyJws,sameKey,validateTimes,nowSeconds,requireThat} from '../../network/crypto.mjs';
 import {verifyIdentity,PROOF_TYPE} from '../../network/identity.mjs';
 const token=s=>typeof s==='string'&&/^[A-Za-z0-9_-]{43}$/.test(s);
+export const relayUnavailable=status=>[502,503,504].includes(status)?'Browser network is temporarily unavailable. Select Reset engine to try again.':null;
 
 export async function openBrowserRelay(config,session,{valid=()=>true,onFailure=()=>{}}={}){
   const meta=config?.browserRelay,identity=config?.identity,api=identity?.apiBase;
@@ -13,8 +14,8 @@ export async function openBrowserRelay(config,session,{valid=()=>true,onFailure=
   const post=async(path,body,tokenValue=null,{timeoutMs=10000,maxResponse=16384}={})=>{
     check();const response=await fetch(path,{method:'POST',mode:'same-origin',credentials:'same-origin',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',headers:{'Content-Type':'application/json',...(tokenValue?{Authorization:'Codi '+tokenValue}:{})},body:JSON.stringify(body),signal:AbortSignal.timeout(timeoutMs)});
     const bytes=new Uint8Array(await response.arrayBuffer());requireThat(bytes.length<=maxResponse,'Browser relay response too large.');
-    let result;try{result=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{if(!response.ok)throw Error('Browser request failed ('+response.status+').');throw Error('Invalid Browser relay response.');}
-    check();if(!response.ok)throw Error(result.error||'Browser network connection failed ('+response.status+').');return result;
+    let result;try{result=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{if(!response.ok)throw Error(relayUnavailable(response.status)||'Browser request failed ('+response.status+').');throw Error('Invalid Browser relay response.');}
+    check();if(!response.ok)throw Error(relayUnavailable(response.status)||result.error||'Browser network connection failed ('+response.status+').');return result;
   };
   await verifyIdentity(session.public,identity);check();
   let challenge=await post(base+'/challenge',{}),id=challenge.connection_id,closed=false,timer=0;
@@ -60,7 +61,7 @@ export async function openBrowserRelay(config,session,{valid=()=>true,onFailure=
   return {url:url.href,reports,async download(source){
     check();requireThat(!closed,'Browser networking has disconnected.');
     const response=await fetch(root+'/download',{method:'POST',mode:'same-origin',credentials:'same-origin',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:source}),signal:AbortSignal.timeout(65000)});
-    if(!response.ok){let result;try{result=await response.json();}catch{}throw Error(result?.error||'Download failed ('+response.status+').');}
+    if(!response.ok){let result;try{result=await response.json();}catch{}throw Error(relayUnavailable(response.status)||result?.error||'Download failed ('+response.status+').');}
     const reader=response.body.getReader(),chunks=[];let size=0;
     try{while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>128*1024*1024)throw Error('Download is larger than 128 MiB.');chunks.push(value);}}
     catch(error){await reader.cancel().catch(()=>{});throw error;}
