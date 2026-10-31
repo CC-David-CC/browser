@@ -1,7 +1,7 @@
 # Browser (experimental)
 
-This app is intended to run an independent Gecko/SpiderMonkey engine in the
-visitor's browser, painting into its own desktop window. Pages do not receive
+This app runs an independent Gecko/SpiderMonkey engine in the visitor's
+browser, painting into its own desktop window. Pages do not receive
 CodiServer app services. Each window owns its engine worker and temporary
 profile; closing or resetting it discards that profile.
 
@@ -63,8 +63,8 @@ engine, and stages `engine/gecko.js`, `engine/gecko.wasm`, `engine/gecko.data`,
 `engine/wisp-client.mjs` and `engine/manifest.json`. These are generated files
 and are excluded from Git. The manifest hashes identify the staged artifacts;
 they do not establish that the sources are trustworthy or the browser is safe.
-The isolated server is at `http://127.0.0.1:8087/demo/`; its test-only CSP
-allows the runtime's blob scripts and is not the live desktop policy.
+The isolated server is at `http://127.0.0.1:8087/demo/`. Its test-only policy
+is separate from the live desktop policy.
 
 To update upstream, deliberately review the new outer and inner revisions,
 the Gecko licenses, Emscripten/Rust requirements, native mailbox ABI, and
@@ -73,16 +73,17 @@ the Gecko licenses, Emscripten/Rust requirements, native mailbox ABI, and
 run the offline tests, and rebuild. Do not substitute upstream's `dist/gecko.js`
 UI bundle for the raw runtime. A staged build alone does not mean it works:
 run the real-engine tests in `docs/ACCEPTANCE.md`, including multiple windows,
-close/reset during initialization, worker cleanup and input, before releasing it on the desktop. The app asset manifest and the builder and
-catalog limits have been updated for this engine; verify CSP and cross-origin isolation on the
-target desktop. The current live desktop blocks the adapter's blob script
-loading. Do not weaken the whole site's policy without an appropriate review.
+close/reset during initialization, worker cleanup and input, before releasing
+it on the desktop. The app asset manifest and builder limits support this
+engine; verify CSP and cross-origin isolation on the target desktop. The current live deployment starts the engine successfully.
+Review any future policy changes before applying them to the desktop.
 
-Online browsing is a separate step: configure only an authenticated Wisp relay
-with server-enforced destination and resource policies, and test TLS and access
-controls. The current `wispURL` is `null`; the v86 relay is not automatically a
-Wisp relay. Never commit runtime binaries, downloaded toolchains, profiles,
-credentials or user data.
+Online browsing requires an authenticated Wisp relay with server-enforced
+destination and resource policies. The app's standalone `wispURL` defaults to
+`null`; on the live desktop, the host provides an authenticated per-session
+relay connection. The separate v86 Linux guest relay is not a Wisp relay.
+Never commit runtime binaries, downloaded toolchains, profiles, credentials or
+user data.
 
 The 2026-10-30 development build produced about 227 MiB of WebAssembly and
 13 MiB of engine data, before compression. These sizes and runtime memory use
