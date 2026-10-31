@@ -344,4 +344,7 @@ snapshot for the authenticated access change is
 `codi-browser-source-ed78ff4b3.tar.zst`, SHA-256
 `0b6f94ae5573bb80d430085cdad66bb3720fdb63d8e5883166412f5219b34139`.
 Access lasts while that Browser session remains authorized.
+The live relay rule-timing update is included in
+`codi-browser-source-933db11ea.tar.zst`, SHA-256
+`86a7231825d85de9199d5117ffe12d4f18f941161f75ad7351f4df00d0169836`.
 
