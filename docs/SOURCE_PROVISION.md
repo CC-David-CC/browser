@@ -193,7 +193,10 @@ For Rust packages missing separate notice files in Firefox's vendored copies,
 a review compared 26 registry packages against the exact SHA-256 checksums in
 the pinned Firefox `Cargo.lock` (lockfile SHA-256
 `1617a3c654395fa24543a12b4eb95c62700f1b75f5d439b8cd1b93ffc7404b03`).
-None had a root license file in the published crate. One nested debug-tree
+Twenty-five had no root license file in the published crate. `remove_dir_all`
+had two files named `LICENCE-APACHE` and `LICENCE-MIT`, which the original
+collector missed because it only matched the spelling `LICENSE`. The collector
+now recognizes both spellings. One nested debug-tree
 license belonged to Asciidoctor documentation and was not treated as the
 crate's own license. The packages' `.cargo_vcs_info.json` revisions and the
 lockfile's pinned Git revisions were used to inspect their original source
@@ -203,9 +206,15 @@ repository revisions are listed with per-file hashes in
 including them. The combined input SHA-256 is
 `c751b4624a249a286f732ca2494c8d3e3f9ae108f67dded1fd2970cef30439e5`.
 The public combined notices are SHA-256
-`a817feabfa8bc5cd56dd24619f0c9c3c9688fa58b69694c082c24d615cd37ea7`.
+`7775f6197a7a14a397ad6180b43b4c553aaacef77ac4e0136a34fc15f3f3f829`.
 Some upstream repositories had no separate license file at the pinned
 revision, and the svg_fmt repository revision was unavailable; those are
 not represented as resolved. Other non-GitHub sources also remain outside
 this collection. Cargo fingerprints show target builds, not necessarily
 objects retained by the final linker.
+
+The corrected target Rust notice input, including the two previously omitted
+`remove_dir_all` files, hashes to
+`8c083caaa5a59ab1a01c0239ca82e378f4e9868b91f6c746a4f711ccea9444eb`.
+`tools/audit_missing_rust_crates.py` and `RUST_MISSING_REGISTRY.json` reproduce
+the registry-archive checksum and filename audit without extracting archives.

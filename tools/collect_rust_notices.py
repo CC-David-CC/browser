@@ -30,7 +30,7 @@ def collect(repo,fingerprints):
         if name not in names:continue
         found.add(name);license_name=package.get('license','not declared')
         out.append('\n===== '+str(name)+' '+str(package.get('version','unknown'))+'; declared license: '+str(license_name)+' =====\n')
-        paths=sorted(p for p in manifest.parent.iterdir() if p.is_file() and not p.is_symlink() and p.name.lower().startswith(('license','copying','notice','copyright')))
+        paths=sorted(p for p in manifest.parent.iterdir() if p.is_file() and not p.is_symlink() and p.name.lower().startswith(('license','licence','copying','notice','copyright')))
         for path in paths:
             if path.stat().st_size>512*1024:raise ValueError('Unexpectedly large notice')
             out.append('\n--- '+path.relative_to(repo).as_posix()+' ---\n'+path.read_text(encoding='utf-8')+'\n')

@@ -1,0 +1,137 @@
+{
+  "cargoLockSHA256": "1617a3c654395fa24543a12b4eb95c62700f1b75f5d439b8cd1b93ffc7404b03",
+  "firefoxCommit": "2e1e835a5da5907e5ceef19aade58a7493f1e34d",
+  "packages": [
+    {
+      "checksum": "467b60e4ee6761cd6fd4e03ea58acefc8eec0d1b1def995c1b3b783fa7be8a60",
+      "name": "app_units",
+      "version": "0.7.8"
+    },
+    {
+      "checksum": "4d517c467117e1d8ca795bc8cc90857ff7f79790cca0e26f6e9462694ece0185",
+      "name": "arraystring",
+      "version": "0.3.0"
+    },
+    {
+      "checksum": "9d305a54bcb99974213b4c78a486c34091e83c5d6d6572f7f4331c904ea9d127",
+      "name": "bhttp",
+      "version": "0.7.2"
+    },
+    {
+      "checksum": "e3b02505ccb8c50b0aa21ace0fc08c3e53adebd4e58caa18a36152803c7709a3",
+      "name": "core_maths",
+      "version": "0.1.0"
+    },
+    {
+      "checksum": "2d1ec383f2d844902d3c34e4253ba11ae48513cdaddc565cf1a6518db09a8e57",
+      "name": "debug_tree",
+      "version": "0.4.0"
+    },
+    {
+      "checksum": "6866f3bfdf8207509a033af1a75a7b08abda06bbaaeae6669323fd5a097df2e9",
+      "name": "enum-map",
+      "version": "2.7.3"
+    },
+    {
+      "checksum": "35f6839d7b3b98adde531effaf34f0c2badc6f4735d26fe74709d8e513a96ef3",
+      "name": "flatbuffers",
+      "version": "25.12.19"
+    },
+    {
+      "checksum": "2c4ad0989667548f06ccd0e306ed56b61bd4d35458d54df5ec7587c0e8ed5e94",
+      "name": "fluent-langneg",
+      "version": "0.13.0"
+    },
+    {
+      "checksum": "078ea7b7c29a2b4df841a7f6ac8775ff6074020c6776d48491ce2268e068f972",
+      "name": "intl_pluralrules",
+      "version": "7.0.2"
+    },
+    {
+      "checksum": "c96249d99282a5d9c4f42ed49545eb2256c365f1b658eeb930ad7ca516337111",
+      "name": "jexl-eval",
+      "version": "0.4.0"
+    },
+    {
+      "checksum": "78569e0a83d98b0ff28fa79f7a7ea9815085f2dc6259d47700bf2fcbbaad4a50",
+      "name": "jexl-parser",
+      "version": "0.4.0"
+    },
+    {
+      "checksum": "d3c48237b9604c5a4702de6b824e02006c3214327564636aef27c1028a8fa0ed",
+      "name": "lalrpop-util",
+      "version": "0.19.12"
+    },
+    {
+      "checksum": "210707fc5b5109801dc32cff1563f7d56568f04757bf92df9c23b2de8c2caacf",
+      "name": "mls-rs",
+      "version": "0.54.0"
+    },
+    {
+      "checksum": "45bd834f164dc06c1fed805540ae307a460b7ed7c2769a35a376f1de577a0dc1",
+      "name": "mls-rs-codec",
+      "version": "0.7.0"
+    },
+    {
+      "checksum": "a39fcfdd769f82037ef92052b6cfc3061822f220767227b56bda73208cc59a7e",
+      "name": "mls-rs-core",
+      "version": "0.26.0"
+    },
+    {
+      "checksum": "3c1f63b7c46e7f40b6ca6ef3a14362abc5617048d6e9f24ea53c7a4922d7fbcf",
+      "name": "mls-rs-crypto-hpke",
+      "version": "0.20.0"
+    },
+    {
+      "checksum": "d70626f39505eaeda9b90429665cb8fdc56538a0b3e357a636125662b6cb80ab",
+      "name": "mls-rs-crypto-traits",
+      "version": "0.21.0"
+    },
+    {
+      "checksum": "a6ab2bf0bae192901fc53a87536381c5d26263cfe1bb0907ee88675998469ffc",
+      "name": "mls-rs-identity-x509",
+      "version": "0.20.0"
+    },
+    {
+      "checksum": "94cb60fca11d2efd72ab0e0ad0298089307a15b14313178416a96476dbea4550",
+      "name": "origin-trial-token",
+      "version": "0.1.1"
+    },
+    {
+      "checksum": "3acd125665422973a33ac9d3dd2df85edad0f4ae9b00dafb1a05e43a9f5ef8e7",
+      "name": "remove_dir_all",
+      "version": "0.5.3"
+    },
+    {
+      "checksum": "1c107b6f4780854c8b126e228ea8869f4d7b71260f962fefb57b996b8959ba6b",
+      "name": "seahash",
+      "version": "4.1.0"
+    },
+    {
+      "checksum": "8fb1df15f412ee2e9dfc1c504260fa695c1c3f10fe9f4a6ee2d2184d7d6450e2",
+      "name": "svg_fmt",
+      "version": "0.4.1"
+    },
+    {
+      "checksum": "b8c6dec3fc6645f71a16a3fa9ff57991028153bd194ca97f4b55e610c73ce66a",
+      "name": "uniffi",
+      "version": "0.31.0"
+    },
+    {
+      "checksum": "b0ef62e69762fbb9386dcb6c87cd3dd05d525fa8a3a579a290892e60ddbda47e",
+      "name": "uniffi_core",
+      "version": "0.31.0"
+    },
+    {
+      "checksum": "a806dddc8208f22efd7e95a5cdf88ed43d0f3271e8f63b47e757a8bbdb43b63a",
+      "name": "uniffi_pipeline",
+      "version": "0.31.0"
+    },
+    {
+      "checksum": "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d",
+      "name": "void",
+      "version": "1.0.2"
+    }
+  ],
+  "version": "codi-rust-missing-registry/1"
+}
