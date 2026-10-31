@@ -112,6 +112,18 @@ The public combined notices match SHA-256
 This group-level review is not a complete audit of all 1,860 object inputs,
 Rust dependencies, generated resources, or downstream legal requirements.
 
+The generated `Unified_cpp_contentanalysis0.cpp` includes two files from
+Firefox's vendored Content Analysis SDK; its corresponding object is listed
+in `libxul_so.list`. The exact pinned `third_party/content_analysis_sdk/LICENSE`
+has SHA-256 `7340f764102806e7e96b80a153a23debafb83dff600f08c27a84c6addefcc93f`
+and is now included in the signed-in combined notice. The regenerated
+component input hashes to
+`634be419b93c590551e15ffae0e82b4fc45086cb17a4ed24f8c7d25582a6e0c7`;
+the served combined notice hashes to
+`ee553fd12a0e8ef825cae8661f19c86c6f15e83dbf0592caf8b5c249eeab7c01`.
+This identifies a linked input, not proof that its code survived final-link
+elimination, and does not establish a complete inventory.
+
 The actual target Cargo fingerprint directory contains 477 distinct names;
 335 match vendored Rust package names. `tools/collect_rust_notices.py` collects
 the declared licenses and available license/notice files for all matching
