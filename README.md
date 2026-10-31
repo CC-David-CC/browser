@@ -88,8 +88,7 @@ matter on phones and limited connections; loading must remain on demand.
 
 ## Relay destination policy
 
-`relay/policy.json` is the operator-editable starting policy for the planned
-server relay. The blacklist includes the requested video, news and social
+`relay/policy.json` is the operator-editable template for the server relay. The blacklist includes the requested video, news and social
 services and their listed subdomains. The whitelist is prefilled with Grainger,
 McMaster-Carr and other engineering suppliers, but `whitelistEnabled` is
 `false`. When enabled, a destination must match the whitelist and not match the
@@ -97,9 +96,8 @@ blacklist. Search engines are not intentionally listed. TCP ports 80 and 443
 are the initial permitted ports.
 
 `relay/policy.py` validates that configuration and checks names and resolved
-addresses. A future relay must call it on every connection and connect to an
-exact vetted public address, so redirects, DNS changes and page subrequests do
-not bypass a one-time address-bar check. IP literals and private/loopback
+addresses. The live relay checks destinations on each connection and connects
+to a vetted address, including for redirects and page subrequests. IP literals and private/loopback
 addresses are denied. Domain lists require maintenance and cannot guarantee
 blocking content rehosted on unrelated domains or accessed through other
 proxies. The separate root-owned live policy is enforced by the Browser relay;
@@ -108,7 +106,7 @@ this source file is its starting template, not the active operator copy.
 The desktop implementation can open selected `.html`/`.htm` files from My
 files as well as upload a local HTML file. It copies the selected document to
 the temporary guest profile; sibling files and persistent browser profiles are
-not implemented yet. The development relay also supports an explicit Download
+not implemented yet. The live relay also supports an explicit Download
 URL action into My files, limited to 128 MiB. That independent fetch does not
 include Gecko cookies, and ordinary clicked downloads inside Gecko are not yet
 integrated. Every redirect is checked against the relay destination policy.
