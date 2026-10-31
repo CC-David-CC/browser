@@ -560,3 +560,17 @@ This includes the Sun notices in libm. It excludes test/example directories,
 comments past the scanned prefix, unmatched or ambiguous-only packages, and
 other dependencies. It is an evidence-based conservative addition, not proof
 that the listed files survived linking or that the wider review is complete.
+
+`tools/audit_linked_rust_notices.py` compares the pinned archive inventory and
+final-symbol summary against the exact live combined notices. It found 198
+vendored package/version candidates (including the three ambiguous-only
+packages); all have package headings. Of those, 26 lack a standalone license
+file in their vendored directory and have a corresponding supplemental marker.
+This is only a marker check: `aa-stroke`, `debug_tree`, and `seahash` still
+need particular care because package-level material is metadata rather than an
+identified upstream standalone license; `svg_fmt` uses a source-matched
+historical tree rather than a verified exact package revision. The report
+SHA-256 is `646833aaa6f9db6ff500f7f24929978c1bd2d384760dfc5de83866b02f7242ec`.
+The pinned live notice SHA was verified independently. Markers neither prove
+license sufficiency nor address other dependencies, ambiguous individual
+symbols, inlined code, or incomplete attribution.
