@@ -35,7 +35,7 @@ class CheckedResolver(AbstractResolver):
 
 class Downloader:
     def __init__(self,relay,*,load_policy=DestinationPolicy.load):self.relay=relay;self.load_policy=load_policy
-    async def fetch(self,value,*,check_alive=lambda:None):
+    async def fetch(self,value,*,check_alive=lambda:None,audit_event=lambda *_args:None):
         if not isinstance(value,str) or len(value)>8192:raise PolicyDenied('Invalid download URL')
         try:url=URL(value)
         except ValueError:raise PolicyDenied('Invalid download URL') from None
@@ -45,12 +45,21 @@ class Downloader:
             if url.scheme not in ('http','https') or not url.host or url.user is not None or url.password is not None or url.fragment:
                 raise PolicyDenied('Use an HTTP or HTTPS URL without credentials or a fragment')
             policy=self.load_policy(self.relay.policy_path);port=url.port
-            name=policy.check_hostname(url.host,port);domains.append(name)
+            if hasattr(self.relay,'audit_enabled') and policy.server_audit_enabled!=self.relay.audit_enabled:
+                raise PolicyDenied('Audit mode changed; restart relay')
+            try:name=policy.check_hostname(url.host,port)
+            except PolicyDenied:
+                audit_event('denied',url.host,port,0)
+                raise
+            domains.append(name)
             resolver=CheckedResolver(policy,self.relay.resolver,self.relay.network_check)
             connector=TCPConnector(resolver=resolver,use_dns_cache=False,force_close=True,limit=1)
             timeout=ClientTimeout(total=60,connect=10,sock_read=15)
-            async with ClientSession(connector=connector,timeout=timeout,trust_env=False,auto_decompress=False) as session:
+            opened=False;size=0;content=None
+            try:
+              async with ClientSession(connector=connector,timeout=timeout,trust_env=False,auto_decompress=False) as session:
                 async with session.get(url,allow_redirects=False,headers={hdrs.ACCEPT_ENCODING:'identity'}) as response:
+                    audit_event('opened',name,port,0);opened=True
                     if response.status in (301,302,303,307,308):
                         if step==MAX_REDIRECTS:raise PolicyDenied('Too many download redirects')
                         target=response.headers.get('Location')
@@ -65,7 +74,7 @@ class Downloader:
                     # Keep large downloads on private temporary disk rather than
                     # accumulating a copy in the relay's memory. The caller owns
                     # and must close the unlinked temporary file.
-                    content=tempfile.TemporaryFile(mode='w+b');size=0
+                    content=tempfile.TemporaryFile(mode='w+b')
                     try:
                         async for chunk in response.content.iter_chunked(65536):
                             check_alive()
@@ -81,4 +90,9 @@ class Downloader:
                         return {'file':content,'bytes':size,'filename':filename,'domains':domains,'target':(name,port,tuple(resolver.allowed))}
                     except BaseException:
                         content.close();raise
+            finally:
+                try:audit_event('closed' if opened else 'denied',name,port,size)
+                except BaseException:
+                    if content is not None:content.close()
+                    raise
         raise PolicyDenied('Too many redirects')

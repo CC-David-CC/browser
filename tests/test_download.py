@@ -49,4 +49,20 @@ class DownloadTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(PolicyDenied):await self.download.fetch(self.base+'/file')
         with self.assertRaises(PolicyDenied):await self.download.fetch(self.base+'/file',check_alive=lambda:(_ for _ in ()).throw(PolicyDenied('expired')))
 
+    async def test_optional_audit_covers_redirects_and_denied_targets_without_paths(self):
+        events=[]
+        result=await self.download.fetch(self.base+'/redirect',audit_event=lambda *args:events.append(args))
+        try:self.assertEqual(result['file'].read(),b'fixture\x00data')
+        finally:result['file'].close()
+        self.assertEqual([e[0] for e in events],['opened','closed','opened','closed'])
+        self.assertEqual(events[-1][3],len(b'fixture\x00data'))
+        events.clear()
+        with self.assertRaises(PolicyDenied):await self.download.fetch(self.base+'/blocked',audit_event=lambda *args:events.append(args))
+        self.assertEqual([e[0] for e in events],['opened','closed','denied'])
+        self.assertEqual(events[-1][1],'blocked.example')
+        self.assertNotIn('/blocked',repr(events));self.assertNotIn('fixture\\x00data',repr(events))
+        def unavailable(*_args):raise RuntimeError('ledger unavailable')
+        with self.assertRaisesRegex(RuntimeError,'ledger unavailable'):
+            await self.download.fetch(self.base+'/file',audit_event=unavailable)
+
 if __name__=='__main__':unittest.main()
