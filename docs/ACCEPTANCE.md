@@ -1,6 +1,6 @@
 # Real-engine acceptance gates
 
-**All gates below are NOT RUN in this handoff.** The offline adapter tests listed in `TEST_STATUS.md` are separate evidence. Do not convert these to PASS because the unit tests passed.
+**Historical initial handoff:** The gates below were not run when this document was written. Later development and live tests are recorded in the current Simplified handoff; these historical entries are not a current status report. Do not infer production readiness from unit tests.
 
 For each run record: adapter archive hash, both source commits, patch hash, engine artifact hashes, build commands/compiler versions, host OS, browser/version, headers, relay configuration, observed result, logs and failures. No fabricated screenshots or success records.
 

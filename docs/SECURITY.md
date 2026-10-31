@@ -1,6 +1,6 @@
 # Security review required before public or sensitive use
 
-**Status: not security-reviewed, not browser-tested, not production-approved.** No claim of a hardened sandbox is made by this package.
+**Status:** The Browser and relay have since received development and live browser tests; see the current Simplified handoff and `LIVE_POLICY.md`. A complete security review and production approval remain outstanding. No claim of a hardened sandbox is made by this package.
 
 ## Intended boundaries
 
@@ -42,7 +42,7 @@ The engine is configured with an ephemeral in-memory profile and no host-file pr
 
 The Open HTML action copies a specifically selected file into the guest virtual filesystem. Other files inside that runtime, including previous imports and engine resources, are not proven to have per-page isolation. Treat placing a file into a guest as a grant to that runtime, not a capability securely scoped to one displayed document.
 
-There is no host clipboard bridge, background upload integration, desktop download destination or persistent profile directory. Do not add broad `host.files` authority to solve a single file transfer. Use explicit selection and the real desktop's permission model.
+There is no host clipboard bridge, background upload integration, native clicked-download integration or persistent profile directory. The explicit Download URL action can save to My files, but uses an independent fetch without the guest browser’s cookies. Do not add broad `host.files` authority to solve a single file transfer. Use explicit selection and the real desktop's permission model.
 
 ## Availability and resource use
 
