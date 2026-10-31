@@ -5,6 +5,7 @@ const token=s=>typeof s==='string'&&/^[A-Za-z0-9_-]{43}$/.test(s);
 export const relayUnavailable=status=>[502,503,504].includes(status)?'Browser network is temporarily unavailable. Select Reset engine to try again.':null;
 
 const MAX_DOWNLOAD_BYTES=128*1024*1024;
+const DOWNLOAD_TIMEOUT_MS=35*60*1000;
 /** Consume a bounded response. The relay supplies Content-Length after its
  * private temporary-file fetch, so normally only one full-size buffer is held. */
 export async function readDownloadBody(response){
@@ -45,6 +46,7 @@ export async function openBrowserRelay(config,session,{valid=()=>true,onFailure=
   };
   await verifyIdentity(session.public,identity);check();
   let challenge=await post(base+'/challenge',{}),id=challenge.connection_id,closed=false,timer=0;
+  const downloadAbort=new AbortController();
   const reportRequestsEnabled=challenge.report_requests===true;
   requireThat(token(id)&&token(challenge.nonce)&&challenge.policy_sha256===meta.policySHA256,'Invalid Browser relay challenge.');
   const root=base+'/connection/'+id;
@@ -68,7 +70,7 @@ export async function openBrowserRelay(config,session,{valid=()=>true,onFailure=
   async function renew(){
     if(closed)return;
     try{challenge=await post(root+'/challenge',{});await authorize(challenge);if(!closed)timer=setTimeout(renew,12000);}
-    catch(error){if(!closed){closed=true;onFailure(error);}}
+    catch(error){if(!closed){closed=true;downloadAbort.abort();onFailure(error);}}
   }
   try{await authorize(challenge);}catch(error){closed=true;throw error;}
   if(!valid()){closed=true;throw Error('Account changed; reopen Browser.');}
@@ -86,10 +88,10 @@ export async function openBrowserRelay(config,session,{valid=()=>true,onFailure=
   }):null;
   return {url:url.href,reports,async download(source){
     check();requireThat(!closed,'Browser networking has disconnected.');
-    const response=await fetch(root+'/download',{method:'POST',mode:'same-origin',credentials:'same-origin',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:source}),signal:AbortSignal.timeout(65000)});
+    const response=await fetch(root+'/download',{method:'POST',mode:'same-origin',credentials:'same-origin',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:source}),signal:AbortSignal.any([downloadAbort.signal,AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS)])});
     if(!response.ok){let result;try{result=await response.json();}catch{}throw Error(relayUnavailable(response.status)||result?.error||'Download failed ('+response.status+').');}
     const data=await readDownloadBody(response);
     check();
     return {data,domains:(response.headers.get('X-Codi-Domain-Requests')||'').split(',').filter(Boolean)};
-  },close(){if(closed)return;closed=true;clearTimeout(timer);void post(root+'/close',{}).catch(()=>{});}};
+  },close(){if(closed)return;closed=true;clearTimeout(timer);downloadAbort.abort();void post(root+'/close',{}).catch(()=>{});}};
 }
