@@ -111,3 +111,16 @@ The public combined notices match SHA-256
 `4d04c982f8713a75b6c787679e0f93ff7ac076b08c5fd5ce0d82da515bf6d35e`.
 This group-level review is not a complete audit of all 1,860 object inputs,
 Rust dependencies, generated resources, or downstream legal requirements.
+
+The actual target Cargo fingerprint directory contains 477 distinct names;
+335 match vendored Rust package names. `tools/collect_rust_notices.py` collects
+the declared licenses and available license/notice files for all matching
+vendored package versions, yielding a conservative set rather than an exact
+final-link inventory. The package contains 38 matching vendored versions
+without separate top-level notice files; their declared licenses and source
+remain listed. The other 142 names include workspace and toolchain crates and
+need separate attribution review. This does not establish which target-built
+crates survive final linking. The source input SHA-256 is
+`8e8bafa0d9f2f3243d1e02910c9b9fd270c24f9c357aa3fcafcb3be8a4a60712`;
+the public combined notices match
+`0c225076a90714c0badf93424d3ae6ee8c57d2d773d17af6641af63643cb042a`.
