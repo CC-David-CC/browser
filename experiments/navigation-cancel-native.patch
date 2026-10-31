@@ -1,0 +1,28 @@
+diff --git a/embed-browser.cpp b/embed-browser.cpp
+index e81e484d6..2e6c90b43 100644
+--- a/embed-browser.cpp
++++ b/embed-browser.cpp
+@@ -418,7 +418,15 @@ bool xul_load(const char* url, int width, int height) {
+   // loop (op=4, ~25fps) keeps repainting as the page hydrates/mutates afterward -- i.e.
+   // progressive load, like a real browser, instead of a multi-minute stall.
+   uint32_t spins = 0;
++  bool canceled = false;
+   SpinEventLoopUntil("xul_load"_ns, [&]() -> bool {
++    constexpr int32_t kCancelNavigation = 0x43414e43;
++    if (g_cmd && __atomic_exchange_n(&g_cmd->evType, 0, __ATOMIC_SEQ_CST) == kCancelNavigation) {
++      nsCOMPtr<nsIWebNavigation> nav = do_QueryInterface(ds);
++      if (nav) nav->Stop(nsIWebNavigation::STOP_ALL);
++      canceled = true;
++      return true;
++    }
+     PresShell* p = ds->GetPresShell();
+     Document* d = p ? p->GetDocument() : nullptr;
+     int st = d ? (int)d->GetReadyStateEnum() : -1;
+@@ -428,6 +436,7 @@ bool xul_load(const char* url, int width, int height) {
+   });
+   printf("xul_load: spun %u, ready\n", spins);
+   fflush(stdout);
++  if (canceled) return true;
+ 
+   // Make our content window the focused/active window so synthesized keyboard
+   // events route to the focused element (otherwise nsFocusManager has no active

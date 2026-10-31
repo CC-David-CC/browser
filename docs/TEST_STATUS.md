@@ -41,6 +41,12 @@ engine showed that Stop remained queued during the first four seconds of a
 ten-second response delay. It needs a responsive cancellation path before Stop
 can be relied on during a stalled navigation.
 
+An isolated cancellation prototype subsequently stopped the delayed fixture
+in 68–85 ms across three runs, handled immediate Stop and later navigation,
+and kept a second Browser window independent. It is not in the live engine;
+the pairing, lifecycle and failure tests described in `experiments/README.md`
+remain before it can replace the shipping implementation.
+
 ## Historical source handoff 0.1.0
 
 The following report describes the earlier source-only handoff and is retained

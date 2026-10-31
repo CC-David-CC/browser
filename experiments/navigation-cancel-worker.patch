@@ -1,0 +1,22 @@
+diff --git a/engine-worker.js b/engine-worker.js
+index 40e47913d..8eb2f2d6e 100644
+--- a/engine-worker.js
++++ b/engine-worker.js
+@@ -285,6 +285,17 @@ self.onmessage=e=>{
+     void init(m.payload).then(v=>reply(m.id,true,v)).catch(e=>{reply(m.id,false,e.message);fatal(e);});return;
+   }
+   if(!ready){if(m.kind==='request')reply(m.id,false,'Engine is starting.');return;}
++  if(m.kind==='request'&&m.type==='control'&&m.payload?.action==='stop') {
++    // Cancel loads still waiting behind another native operation as well as an
++    // active load. Otherwise immediate Stop can sit behind a queued navigation.
++    for(let i=queue.length-1;i>=0;i--){
++      const item=queue[i];
++      if(item.kind==='request' && (item.type==='navigate'||item.type==='open-html')){
++        queue.splice(i,1);reply(item.id,false,'Navigation stopped.');
++      }
++    }
++    mailbox?.cancelLoad();
++  }
+   if(m.kind==='request'||m.kind==='notice')enqueue(m);
+ };
+ self.addEventListener('unhandledrejection',e=>{e.preventDefault();fatal(e.reason);});

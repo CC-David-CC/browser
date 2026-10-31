@@ -42,3 +42,29 @@ that call. A responsive cancellation mechanism needs coordination between the
 worker and native loop; do not assume that a progress-listener change fixes it.
 The local fixture deliberately maps a test hostname to loopback and must never
 be deployed as a production relay.
+
+## Stop prototype
+
+The three `navigation-cancel-*.patch` files are a matched, **unshipped**
+prototype. The worker signals an in-flight load through an atomic mailbox
+field and removes queued loads when Stop is requested; the modified native
+event loop consumes that signal and asks Gecko to stop. The worker must not be
+deployed with the old engine: the old engine does not consume this signal.
+
+With the patched engine and worker in an isolated app, three repetitions
+stopped a ten-second delayed response in 68–85 ms and successfully navigated
+afterward. Immediate Stop also returned, and a separate two-window test found
+that stopping one window did not disrupt the other. The reusable local-only
+fixture and tests are `tests/browser-stop-experiment-fixture.py`,
+`tests/browser-stop-experiment.test.mjs`, and
+`tests/browser-stop-isolation-experiment.test.mjs`. The fixture requires
+`CODI_EXPERIMENT_APP` to point to the isolated patched app and deliberately
+maps a synthetic host to loopback; never serve it publicly.
+
+This is not yet a production patch. Before rollout, integrate the native
+change into the pinned patch/build/source-provision pipeline, add explicit
+ABI/capability pairing, test cancellation when Gecko's event loop is idle or
+stalled, repeated and overlapping commands, window closure, phone behavior,
+and failures. Ensure the UI reports cancellation only after the engine has
+actually processed it. The experimental WASM SHA-256 was
+`13a8022769bfb2486471515d40e9af40df11ff901b2ac2bf4f4dd5b64b954828`.
