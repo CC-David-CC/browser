@@ -419,3 +419,10 @@ It contains 367,819 named functions, including 19 names referencing
 or `void::`. These counts include possible type references; lack of a name
 cannot establish absence after inlining or optimization. This scan is not a
 complete final-link inventory or a conclusion about license obligations.
+
+The updated notice-generator source is also indexed for signed-in users as
+`codi-browser-source-9f99310f6.tar.zst`, SHA-256
+`14f39b6438216f4ab3a99524255389594ec73682b392e30fe555780a04edd88b`.
+A live registered test downloaded and verified the complete archive. This
+supplements the runtime's existing source snapshot and does not establish a
+complete final-link inventory.
