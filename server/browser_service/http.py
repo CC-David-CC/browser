@@ -7,6 +7,7 @@ import asyncio
 import json
 import re
 import time
+from pathlib import Path
 from urllib.parse import quote
 from urllib.parse import urlsplit
 from aiohttp import ClientError, web
@@ -23,7 +24,7 @@ async def disk_io(function,*args):
         finally:raise
 
 class BrowserHTTP:
-    def __init__(self,sessions,relay,*,origin,base_path='',secure_cookie=True,downloader=None,reports=None):
+    def __init__(self,sessions,relay,*,origin,base_path='',secure_cookie=True,downloader=None,reports=None,source_root=None):
         u=urlsplit(origin)
         if not u.hostname or u.username or u.password or u.path or u.query or u.fragment or origin!=u.geturl() or (u.scheme!='https' and not (u.scheme=='http' and u.hostname=='127.0.0.1' and not secure_cookie)):
             raise ValueError('HTTPS origin or explicit loopback test origin required')
@@ -32,6 +33,7 @@ class BrowserHTTP:
         self.cookie='__Secure-codi-browser' if secure_cookie else 'codi-browser-test'
         relay.authenticate=self.authenticate;self.downloader=downloader;self.downloads={};self.reports=reports
         self.report_slots=asyncio.Semaphore(2)
+        self.source_root=Path(source_root) if source_root is not None else None
 
     def routes(self,app):
         app.router.add_post(self.base+'/challenge',self.initial)
@@ -39,6 +41,9 @@ class BrowserHTTP:
         app.router.add_post(root+'/challenge',self.challenge)
         app.router.add_post(root+'/authorize',self.authorize)
         app.router.add_post(root+'/close',self.close)
+        if self.source_root:
+            app.router.add_get(root+'/sources/',self.source_file)
+            app.router.add_get(root+'/sources/{name}',self.source_file)
         if self.downloader:app.router.add_post(root+'/download',self.download)
         if self.reports:
             app.router.add_post(root+'/reports/pending',self.report_pending)
@@ -119,6 +124,30 @@ class BrowserHTTP:
         response=self.response({'closed':True})
         response.del_cookie(self.cookie,path=self.base+'/connection/'+identifier+'/')
         return response
+
+    async def source_file(self,request):
+        # A signed registered relay lease and its path-scoped HttpOnly cookie
+        # are required even for the index, HEAD and byte-range requests.
+        if request.host!=self.host or request.query_string:raise web.HTTPForbidden()
+        identifier=self.identifier(request)
+        try:principal=self.sessions.principal(identifier,self.secret(request))
+        except (NetworkDenied,ValueError):raise web.HTTPUnauthorized() from None
+        if not principal or principal.kind!='registered' or principal.deadline<=time.time():raise web.HTTPUnauthorized()
+        name=request.match_info.get('name') or 'index.html'
+        if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,127}',name):raise web.HTTPNotFound()
+        try:
+            manifest_path=self.source_root/'notice-manifest.json'
+            if self.source_root.is_symlink() or manifest_path.is_symlink():raise ValueError()
+            raw=manifest_path.read_bytes()
+            if len(raw)>65536:raise ValueError()
+            manifest=json.loads(raw)
+            if manifest.get('version')!='codi-browser-notices/1':raise ValueError()
+            allowed=set(manifest['files'])|set(manifest['sourceArchives'])|{'notice-manifest.json'}
+            if name not in allowed:raise web.HTTPNotFound()
+            path=self.source_root/name
+            if path.is_symlink() or not path.is_file():raise web.HTTPNotFound()
+        except (OSError,ValueError,KeyError,TypeError):raise web.HTTPServiceUnavailable() from None
+        return web.FileResponse(path,headers={'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'})
 
     async def report_call(self,request,keys,method,*,maximum=16384):
         self.headers(request,maximum);identifier=self.identifier(request)
