@@ -5,6 +5,10 @@ visitor's browser, painting into its own desktop window. Pages do not receive
 CodiServer app services. Each window owns its engine worker and temporary
 profile; closing or resetting it discards that profile.
 
+The adapter reads its mailbox from the current shared WebAssembly memory
+buffer. Gecko can grow that memory on another thread; the adapter reacquires
+its views when that happens so new frames remain accessible.
+
 **Status:** the Browser app, pinned Gecko engine, and authenticated,
 policy-controlled Wisp relay are live at ksu.codes. Registered-account tests
 cover basic navigation, destination policy, HTML opening, clicked downloads,

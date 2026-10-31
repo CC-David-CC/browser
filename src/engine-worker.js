@@ -98,6 +98,7 @@ async function init(payload){
     const now=performance.now();if(now-lastLog>1000){logTokens=12;lastLog=now;}
     if(logTokens-->0)event('log',{message:s.slice(0,2000),error});
   };
+  let engineMemory=null;
   const options={
     mainScriptUrlOrBlob:sourceURL,
     locateFile:name=>new URL(name,base).href,
@@ -118,6 +119,8 @@ async function init(payload){
       if(Connection){m.WispClientConnection=Connection;m.wispUrl=config.wispURL;}
     }],
     instantiateWasm:(imports,success)=>{
+      engineMemory=imports.env.memory;
+      if(!(engineMemory instanceof WebAssembly.Memory))throw new Error('Engine shared memory is unavailable.');
       (async()=>{
         const r=await verifiedResponse(assets.wasm);
         // No silent fallback fetching a different file or disabling checks.
@@ -132,7 +135,7 @@ async function init(payload){
   if(dead)throw new Error('Window closed during engine initialization.');
   if(typeof moduleInstance.PThread?.terminateAllThreads!=='function')throw new Error('Missing lifetime export. Apply the supplied native patch.');
   if(typeof moduleInstance._browser_embed_abi!=='function' || moduleInstance._browser_embed_abi()!==1)throw new Error('Native browser ABI patch missing.');
-  mailbox=new Mailbox(moduleInstance,moduleInstance._xul_cmd_ptr(),config.commandTimeoutMs);
+  mailbox=new Mailbox(moduleInstance,moduleInstance._xul_cmd_ptr(),config.commandTimeoutMs,engineMemory);
   // The upstream minimal GRE omits download modules. Restore the reviewed
   // exact-revision sources into this window's private, ephemeral guest FS.
   moduleInstance.FS.mkdir('/browser-downloads');

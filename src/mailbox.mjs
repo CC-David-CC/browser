@@ -15,8 +15,10 @@ const pause = ms => new Promise(r=>setTimeout(r, ms));
 // A native -1 reply is completed failure, not an unknown in-flight state.
 export class EngineCommandError extends Error { constructor(message){super(message);this.name='EngineCommandError';} }
 export class Mailbox {
-  constructor(module, pointer, timeoutMs=45000) {
+  constructor(module, pointer, timeoutMs=45000, memory=null) {
     this.module = module;
+    if(memory!==null&&(!(memory instanceof WebAssembly.Memory)||!(memory.buffer instanceof SharedArrayBuffer)))throw new Error('Expected shared engine memory.');
+    this.memory=memory;this.viewBuffer=null;this.viewBytes=null;this.viewWords=null;
     if(!Number.isInteger(pointer)||pointer<4||pointer>0xffffffff)throw new Error('Invalid mailbox pointer.');
     if(typeof SharedArrayBuffer==='undefined'||!(module.HEAPU8?.buffer instanceof SharedArrayBuffer))throw new Error('Expected shared engine memory.');
     this.pointer = pointer;
@@ -26,8 +28,16 @@ export class Mailbox {
     this.assertRange(this.pointer, 8328);
     if (this.pointer % 4) throw new Error('Unaligned engine mailbox.');
   }
-  get bytes() { return this.module.HEAPU8; }
-  get words() { return this.module.HEAP32; }
+  refreshViews() {
+    if(!this.memory)return;
+    // A pthread can grow shared WebAssembly memory without refreshing this
+    // worker's Emscripten HEAP views. The old SharedArrayBuffer remains valid
+    // but does not cover newly allocated bytes; reacquire from Memory itself.
+    const buffer=this.memory.buffer;
+    if(buffer!==this.viewBuffer){this.viewBuffer=buffer;this.viewBytes=new Uint8Array(buffer);this.viewWords=new Int32Array(buffer);}
+  }
+  get bytes() { if(!this.memory)return this.module.HEAPU8;this.refreshViews();return this.viewBytes; }
+  get words() { if(!this.memory)return this.module.HEAP32;this.refreshViews();return this.viewWords; }
   assertRange(p,n) {
     if (!Number.isSafeInteger(p) || !Number.isSafeInteger(n) || p < 0 || n < 0 || p+n > this.bytes.byteLength) {
       throw new Error('Engine buffer outside WASM memory.');

@@ -17,6 +17,14 @@ test('completed native failure is recoverable',async()=>{const {box,m}=fixture()
 test('malformed frame poisons mailbox',async()=>{const {box,m}=fixture();const p=box.command({op:OP.paint},2,2);finish(m,new Uint8Array(4));await assert.rejects(p,/Expected/);assert.equal(box.failed,true);});
 test('out-of-bounds native memory rejected',async()=>{const {box,m}=fixture();const p=box.command({op:OP.paint},1,1);m.HEAP32[(base+OFF.result)/4]=65535;m.HEAP32[(base+OFF.length)/4]=4;Atomics.store(m.HEAP32,base/4,3);await assert.rejects(p,/outside/);});
 test('shared heap views reacquired after growth',async()=>{const {box,m}=fixture();const p=box.command({op:OP.paint},1,1);const fresh=new SharedArrayBuffer(131072);new Uint8Array(fresh).set(m.HEAPU8);m.HEAPU8=new Uint8Array(fresh);m.HEAP32=new Int32Array(fresh);finish(m,new Uint8Array([1,2,3,4]));assert.deepEqual([...(await p).pixels],[3,2,1,255]);});
+test('reads a frame allocated after shared Wasm memory grows without refreshing Module views',async()=>{
+ const memory=new WebAssembly.Memory({initial:1,maximum:2,shared:true});const stale=memory.buffer;
+ const m={HEAPU8:new Uint8Array(stale),HEAP32:new Int32Array(stale)};m.HEAP32[base/4]=10;
+ const box=new Mailbox(m,base,200,memory),pending=box.command({op:OP.paint},1,1);
+ memory.grow(1);const fresh=new Uint8Array(memory.buffer);fresh.set([10,20,30,0],70000);
+ const words=new Int32Array(memory.buffer);words[(base+OFF.result)/4]=70000;words[(base+OFF.length)/4]=4;Atomics.store(words,base/4,3);
+ assert.equal(m.HEAPU8.byteLength,65536);assert.deepEqual([...(await pending).pixels],[30,20,10,255]);assert.equal(box.failed,false);
+});
 test('abort before submission does not change state',async()=>{const {box,m}=fixture();const a=new AbortController();a.abort();await assert.rejects(box.command({op:OP.paint},1,1,a.signal),/disposed/);assert.equal(m.HEAP32[base/4],10);});
 test('abort in flight fails instance',async()=>{const {box}=fixture();const a=new AbortController();const p=box.command({op:OP.paint},1,1,a.signal);a.abort();await assert.rejects(p,/disposed/);assert.equal(box.failed,true);});
 test('reject impossible mailbox pointers without wraparound',()=>{const {m}=fixture();for(const ptr of [0,-1,1,0x100000000,65530,1.5,NaN])assert.throws(()=>new Mailbox(m,ptr));});
