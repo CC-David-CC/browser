@@ -31,6 +31,7 @@ LIBERATION_LICENSE_SHA='93fed46019c38bbe566b479d22148e2e8a1e85ada614accb0211c37b
 COMPILED_NOTICES_SHA='85201fadf7d77201dc1d8c026f0340ecd6b258f6d63fe339486a200d3e377dde'
 RUST_NOTICES_SHA='8e8bafa0d9f2f3243d1e02910c9b9fd270c24f9c357aa3fcafcb3be8a4a60712'
 RUST_STDLIB_SHA='90567e2718bf7fd65a71a3a43c5596488e80e5f51ed02bfea6fec54458b5f3d1'
+PULSE_LICENSE_SHA='44c6b5ae5ec3fe2fbc608b00e6f4896f4d2d5c7e525fcbaa3eaa3cf2f3d5a983'
 EMS_LICENSES=('LICENSE','system/lib/libunwind/LICENSE.TXT','system/lib/mimalloc/LICENSE',
               'system/lib/libc/musl/COPYRIGHT','system/lib/libcxx/LICENSE.TXT',
               'system/lib/compiler-rt/LICENSE.TXT','system/lib/llvm-libc/LICENSE.TXT',
@@ -44,7 +45,7 @@ def sha(path):
     return h.hexdigest()
 def member(archive,name):
     return subprocess.run(['tar','--zstd','-xOf',str(archive),name],check=True,capture_output=True).stdout
-def prepare(firefox_license,emscripten,wisp,adapter_license,liberation_license,compiled_notices,rust_notices,rust_stdlib,out):
+def prepare(firefox_license,emscripten,wisp,adapter_license,liberation_license,compiled_notices,rust_notices,rust_stdlib,pulse_license,out):
     out=Path(out).absolute()
     if out.exists() or out.is_symlink() or not out.parent.is_dir():raise ValueError('New output directory required')
     if sha(firefox_license)!=FIREFOX_LICENSE_SHA:raise ValueError('Firefox notice is not from the pinned build')
@@ -54,6 +55,7 @@ def prepare(firefox_license,emscripten,wisp,adapter_license,liberation_license,c
     if sha(compiled_notices)!=COMPILED_NOTICES_SHA:raise ValueError('Wrong compiled component notices')
     if sha(rust_notices)!=RUST_NOTICES_SHA:raise ValueError('Wrong Rust component notices')
     if sha(rust_stdlib)!=RUST_STDLIB_SHA:raise ValueError('Wrong Rust standard library notices')
+    if sha(pulse_license)!=PULSE_LICENSE_SHA:raise ValueError('Wrong Pulse Rust license')
     raw=Path(firefox_license).read_text(encoding='utf-8')
     # Retain the license text; make Firefox-internal links usable as a normal
     # same-origin webpage and remove Firefox-only stylesheet references.
@@ -67,6 +69,7 @@ def prepare(firefox_license,emscripten,wisp,adapter_license,liberation_license,c
     ems.append(Path(compiled_notices).read_text(encoding='utf-8').rstrip()+'\n')
     ems.append(Path(rust_notices).read_text(encoding='utf-8').rstrip()+'\n')
     ems.append('===== Rust 1.95.0 standard library copyright notices (original HTML) =====\n'+Path(rust_stdlib).read_text(encoding='utf-8').rstrip()+'\n')
+    ems.append('===== cubeb-pulse-rs LICENSE, revision 3cf4a1af09a1748d0e184297a17132bdcc608874 =====\n'+Path(pulse_license).read_text(encoding='utf-8').rstrip()+'\n')
     license_wisp=member(wisp,'LICENSE');adapter=Path(adapter_license).read_bytes()
     links='\n'.join('<li><a href="'+html.escape(name,quote=True)+'">'+html.escape(name)+'</a><br><code>SHA-256 '+value+'</code></li>' for name,value in SOURCES.items())
     index='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Browser licenses and source</title></head><body><main><h1>Browser licenses and source</h1>
@@ -86,7 +89,7 @@ def prepare(firefox_license,emscripten,wisp,adapter_license,liberation_license,c
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
-    for name in ('firefox-license','emscripten','wisp','adapter-license','liberation-license','compiled-notices','rust-notices','rust-stdlib','out'):p.add_argument('--'+name,type=Path,required=True)
+    for name in ('firefox-license','emscripten','wisp','adapter-license','liberation-license','compiled-notices','rust-notices','rust-stdlib','pulse-license','out'):p.add_argument('--'+name,type=Path,required=True)
     a=p.parse_args()
-    try:print(json.dumps(prepare(a.firefox_license,a.emscripten,a.wisp,a.adapter_license,a.liberation_license,a.compiled_notices,a.rust_notices,a.rust_stdlib,a.out),indent=2))
+    try:print(json.dumps(prepare(a.firefox_license,a.emscripten,a.wisp,a.adapter_license,a.liberation_license,a.compiled_notices,a.rust_notices,a.rust_stdlib,a.pulse_license,a.out),indent=2))
     except (ValueError,OSError,subprocess.CalledProcessError) as error:p.error(str(error))

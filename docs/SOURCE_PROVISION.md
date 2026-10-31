@@ -125,10 +125,22 @@ rules). These include Rust standard-library and compiler crates. The build used
 Rust 1.95.0, commit `59807616e1fa2540724bfbac14d7976d7e4a3860`; its standard
 library copyright and dependency notice HTML is appended unchanged to the
 public combined notice. Some workspace manifests omit a license field;
-sampling their source files showed Mozilla headers, but each still needs
-review. This does not establish which target-built crates survive final
+all tracked Rust files under the 22 matched manifests carry Mozilla license
+headers (47 observations, including overlapping paths). The reproducible
+check is `tools/audit_workspace_headers.py`; metadata and non-Rust files were
+outside its scope. This does not establish which target-built crates survive final
 linking. The Rust crate notice input SHA-256 is
 `8e8bafa0d9f2f3243d1e02910c9b9fd270c24f9c357aa3fcafcb3be8a4a60712`;
 the public combined notices now match
-`b1a5cd60fa71ae515da2e05ffb88358b1f2d4925cba2d79ae4ee8b6e6b1eeb6c`.
+`cfec82baaa9cc83eb238288f493d2116a14603c34aadebab15c7796c4d7cd9c3`.
 The reproducible manifest scan is `tools/inventory_workspace_crates.py`.
+
+Two target-built vendored audio crates, `pulse` and `pulse-ffi`, declare ISC
+and refer to an accompanying license absent from their vendored directories.
+Firefox's Cargo.lock pins upstream `mozilla/cubeb-pulse-rs` revision
+`3cf4a1af09a1748d0e184297a17132bdcc608874`. Its root LICENSE was fetched at
+that exact revision, SHA-256
+`44c6b5ae5ec3fe2fbc608b00e6f4896f4d2d5c7e525fcbaa3eaa3cf2f3d5a983`,
+and is included in the combined public notices. The crates' source files also
+retain their original copyright headers. This covers the observed missing
+file without claiming that all remaining license questions are resolved.
