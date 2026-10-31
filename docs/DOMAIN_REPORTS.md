@@ -47,3 +47,10 @@ account. The guarded test temporarily restarts the relay and is implemented in
 journal for explicit recovery if interrupted. The first attempt demonstrated
 that systemd `active` can precede socket readiness and received a transient 502;
 the guard now waits until the actual relay socket accepts a connection.
+
+A later live recovery test did not create a report request: it stopped the
+Browser relay before opening a disposable account's Browser window and saw an
+unavailable message, then restarted it and reconnected with **Reset engine**.
+It repeated the test with an already-open Browser and verified that a new page
+loaded after reconnection. This verifies the manual recovery flow, not automatic
+restoration of a temporary browsing profile. Server-side audit remained off.
