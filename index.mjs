@@ -38,7 +38,7 @@ export function mount(host) {
   const keyboard=make('textarea','mobile-keyboard');keyboard.setAttribute('aria-label','Website keyboard input');keyboard.autocapitalize='off';keyboard.autocomplete='off';keyboard.spellcheck=false;
   stage.append(keyboard);root.append(style,toolbar,warning,stage,status,details,picker);
   const lifetime=new AbortController();
-  let instance=null,runAbort=null,relay=null,disposed=false,generation=0,sizeTimer=0,reportTimer=0,reportPanel=null,seen=false;
+  let instance=null,runAbort=null,relay=null,disposed=false,generation=0,sizeTimer=0,reportTimer=0,reportPanel=null,seen=false,networkNotice='';
   const logLines=[];
   const log=s=>{logLines.push(String(s).slice(0,2000));if(logLines.length>60)logLines.shift();logs.textContent=logLines.join('\n');};
   const setStatus=s=>{if(!disposed)status.textContent=s;};
@@ -81,7 +81,7 @@ export function mount(host) {
   }
   async function operation(type,payload={}) {
     const s=instance,g=generation;if(!s||s.state!=='ready')return;
-    try{setStatus('Loading…');await s.request(type,payload);if(current(s,g))setStatus(payload.action==='stop'?'Stopped.':'Navigation requested.');}
+    try{networkNotice='';setStatus('Loading…');await s.request(type,payload);if(current(s,g))setStatus(networkNotice||(payload.action==='stop'?'Stopped.':'Navigation requested.'));}
     catch(e){if(current(s,g))report(e);}
   }
   function applySize(){
@@ -122,6 +122,10 @@ export function mount(host) {
             info.hidden=true;
           }catch(e){report(e);s.fail(e);}
           finally{s.notify('frame-ack',{seq:m.seq});}
+        }else if(m.type==='network-blocked'){
+          networkNotice='The site or one of its resources was blocked by the server network policy'+(m.hostname?' ('+String(m.hostname).slice(0,253)+').':'.');setStatus(networkNotice);
+        }else if(m.type==='network-throttled'){
+          networkNotice='Browser network connection limit reached. Try again shortly.';setStatus(networkNotice);
         }else if(m.type==='domain-use'){
           if(usageOwner&&host.storage?.signedInSubject?.()===usageOwner)void recordDomain(usageOwner,m.hostname).catch(error=>log('Domain usage could not be saved on this device: '+textError(error)));
         }else if(m.type==='navigation'){

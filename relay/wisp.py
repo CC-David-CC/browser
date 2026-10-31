@@ -17,6 +17,11 @@ WINDOW = 8
 MAX_QUEUED_BYTES = 512 * 1024
 CONNECT_TIMEOUT = 10
 IDLE_TIMEOUT = 120
+HOST_BLOCKED = 0x48  # Wisp's standard server-side policy denial reason.
+CONNECTION_THROTTLED = 0x49
+
+class ConnectionLimit(Exception):
+    pass
 
 class Relay:
     def __init__(self, *, policy_path, origin, authenticate, source, network_check, audit=None, resolver=None, connector=None, max_streams=1024):
@@ -38,7 +43,11 @@ class Relay:
     def check_stream(self,name,port,address):
         policy=self.policies.current()
         if policy.server_audit_enabled!=self.audit_enabled:raise PolicyDenied('Audit mode changed; restart relay')
-        policy.check_hostname(name,port);self.network_check(address)
+        policy.check_hostname(name,port);self.check_network(address)
+
+    def check_network(self,address):
+        try:self.network_check(address)
+        except ValueError as error:raise PolicyDenied('Destination blocked by network policy') from error
 
     async def _resolve(self, name, port):
         loop = asyncio.get_running_loop()
@@ -81,6 +90,7 @@ class Relay:
             except Exception:await ws.close(code=1011,message=b'Audit unavailable')
             await packet(4,stream_id,bytes([reason]))
         async def pump_out(stream_id, entry):
+            reason=1
             try:
                 while True:
                     data = await asyncio.wait_for(entry['reader'].read(MAX_FRAME), IDLE_TIMEOUT)
@@ -88,8 +98,9 @@ class Relay:
                     self.check_stream(entry['name'],entry['port'],entry['address'])
                     entry['received'] += len(data)
                     await packet(2,stream_id,data)
-            except Exception: pass
-            finally: await finish(stream_id)
+            except PolicyDenied:reason=HOST_BLOCKED
+            except Exception:reason=3
+            finally: await finish(stream_id,reason)
         async def pump_in(stream_id, entry):
             try:
                 while True:
@@ -100,6 +111,8 @@ class Relay:
                     await asyncio.wait_for(entry['writer'].drain(), IDLE_TIMEOUT)
                     entry['sent'] += len(data)
                     await packet(3,stream_id,struct.pack('<I',WINDOW-entry['queue'].qsize()))
+            except PolicyDenied:
+                await finish(stream_id,HOST_BLOCKED)
             except Exception:
                 await finish(stream_id,3)
         async def connect(stream_id, payload):
@@ -111,11 +124,11 @@ class Relay:
                 raw=payload[3:].decode('utf-8','strict');policy=self.policies.current()
                 if policy.server_audit_enabled!=self.audit_enabled:raise PolicyDenied('Audit mode changed; restart relay')
                 name=policy.check_hostname(raw,port)
-                if self.users.get(principal.sub,0)>=policy.max_connections_per_user or self.active_streams>=self.max_streams:raise PolicyDenied('Connection limit')
+                if self.users.get(principal.sub,0)>=policy.max_connections_per_user or self.active_streams>=self.max_streams:raise ConnectionLimit('Connection limit')
                 self.users[principal.sub]=self.users.get(principal.sub,0)+1;self.active_streams+=1;reserved=True
                 addresses=policy.check_addresses(await asyncio.wait_for(self.resolver(name,port),CONNECT_TIMEOUT))
                 if len(addresses)>32:raise PolicyDenied('Too many resolved addresses')
-                for address in addresses:self.network_check(address)
+                for address in addresses:self.check_network(address)
                 # Some hosts publish IPv6 even when this relay has no IPv6 route.
                 # Try each already-vetted address with a bounded total deadline;
                 # never ask DNS again during connection establishment.
@@ -126,13 +139,14 @@ class Relay:
                             break
                         except (OSError,TimeoutError):continue
                     else:raise OSError('No validated address was reachable')
-            except Exception:
+            except Exception as error:
                 if reserved:
                     self.users[principal.sub]-=1;self.active_streams-=1
                     if not self.users[principal.sub]:del self.users[principal.sub]
                 try:self.audit({'subject':principal.sub,'source':peer,'destination':raw if 'raw' in locals() else '', 'port':port,'event':'denied'})
                 except Exception:await ws.close(code=1011,message=b'Audit unavailable');return
-                await packet(4,stream_id,b'\x03');return
+                reason=HOST_BLOCKED if isinstance(error,PolicyDenied) else CONNECTION_THROTTLED if isinstance(error,ConnectionLimit) else 3
+                await packet(4,stream_id,bytes([reason]));return
             except asyncio.CancelledError:
                 if reserved:
                     self.users[principal.sub]-=1;self.active_streams-=1

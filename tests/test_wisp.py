@@ -48,7 +48,7 @@ class WispRelayTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual((await self.read(ws))[0],(3,0))
             def dest(name):return bytes([1])+struct.pack('<H',443)+name.encode()
             await ws.send_bytes(self.pkt(1,1,dest('www.youtube.com')))
-            self.assertEqual((await self.read(ws))[0],(4,1));self.assertEqual(self.calls,[])
+            self.assertEqual(await self.read(ws),((4,1),b'\x48'));self.assertEqual(self.calls,[])
             await ws.send_bytes(self.pkt(1,2,dest('grainger.com')))
             await ws.send_bytes(self.pkt(2,2,b'hello'))
             messages=[await self.read(ws),await self.read(ws)]
@@ -67,7 +67,7 @@ class WispRelayTests(unittest.IsolatedAsyncioTestCase):
             await self.read(a);await self.read(b);destination=bytes([1])+struct.pack('<H',443)+b'grainger.com'
             await a.send_bytes(self.pkt(1,1,destination));await a.send_bytes(self.pkt(2,1,b'first'))
             self.assertIn(((2,1),b'first'),[await self.read(a),await self.read(a)])
-            await b.send_bytes(self.pkt(1,1,destination));self.assertEqual((await self.read(b))[0],(4,1))
+            await b.send_bytes(self.pkt(1,1,destination));self.assertEqual(await self.read(b),((4,1),b'\x49'))
             await a.send_bytes(self.pkt(4,1,b'\x01'));self.assertEqual((await self.read(a))[0],(4,1))
             await b.send_bytes(self.pkt(1,2,destination));await b.send_bytes(self.pkt(2,2,b'second'))
             self.assertIn(((2,2),b'second'),[await self.read(b),await self.read(b)])
@@ -172,7 +172,7 @@ class WispRelayTests(unittest.IsolatedAsyncioTestCase):
                 self.assertIn(((2,2),b'before'),[await self.read(ws),await self.read(ws)])
                 value['blacklist'].append('grainger.com');new=path.with_suffix('.new');new.write_text(json.dumps(value));new.replace(path)
                 await ws.send_bytes(self.pkt(2,2,b'after'))
-                self.assertEqual((await self.read(ws))[0],(4,2))
+                self.assertEqual(await self.read(ws),((4,2),b'\x48'))
 
     async def test_new_outgoing_block_stops_an_existing_stream(self):
         state={'blocked':False}
@@ -187,6 +187,6 @@ class WispRelayTests(unittest.IsolatedAsyncioTestCase):
             first=[await self.read(ws),await self.read(ws)];self.assertIn(((2,2),b'before'),first)
             state['blocked']=True
             await ws.send_bytes(self.pkt(2,2,b'after'))
-            self.assertEqual((await self.read(ws))[0],(4,2))
+            self.assertEqual(await self.read(ws),((4,2),b'\x48'))
 
 if __name__=='__main__':unittest.main()

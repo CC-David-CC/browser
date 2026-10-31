@@ -68,8 +68,14 @@ async function init(payload){
       }
       create_stream(hostname,port,...rest){
         const stream=super.create_stream(hostname,port,...rest);
+        stream.codiDestination=typeof hostname==='string'?hostname.slice(0,253):'';
         event('domain-use',{hostname});
         return stream;
+      }
+      close_stream(stream,reason){
+        if(reason===0x48)event('network-blocked',{hostname:stream.codiDestination});
+        else if(reason===0x49)event('network-throttled',{});
+        return super.close_stream(stream,reason);
       }
     };
   }
