@@ -391,3 +391,31 @@ added native file and build driver, supplementing the pinned base archives.
 The registered live test downloaded and verified the archive. The engine WASM
 is SHA-256 `4da6079da4a9bf6d1d48701895935bb97f3cfc197db38a771f693705c6d64ba3`.
 The unresolved license and final-link inventory limitations remain.
+
+The signed-in combined notices now reproduce the exact Firefox-vendored
+package metadata for `app_units 0.7.8`, `core_maths 0.1.0`, `debug_tree 0.4.0`
+and `void 1.0.2`. Those files identify the packages' declared licenses and
+listed authors; the latter are not represented as independently verified
+copyright notices. The pinned `app_units`, `core_maths` and `debug_tree`
+upstream trees have no project license file at their recorded revisions;
+`debug_tree` has an unrelated documentation license. The `void` release has
+no separate license file as noted above. The pinned Firefox license page
+contains the MPL 2.0 and MIT texts, but this metadata does not resolve every
+possible attribution question. Recreate the combined component input with
+`tools/collect_component_notices.py`; its SHA-256 is
+`49d348e716ad0dc0139d25bd4a011aa8f82ef3788185b26186ce02fca87b501d`.
+The served combined notice is SHA-256
+`04dd62fdc18dc6b94bfa439f55b4103de6bb34394b53e8e6167264dd8d2b8ada`;
+its manifest is SHA-256
+`8f35548e9754f63a3fa201ef9698c5c55c93a39085dd2ef41fbcb8aed140240f`.
+A live registered session retrieved and hash-verified it.
+
+The current ABI v3 WASM's name section was scanned directly from the live
+release after verifying SHA-256
+`4da6079da4a9bf6d1d48701895935bb97f3cfc197db38a771f693705c6d64ba3`.
+It contains 367,819 named functions, including 19 names referencing
+`app_units::`, 18 `seahash::`, 15 `svg_fmt::`, and 413
+`content_analysis::sdk::`. No names matched `core_maths::`, `debug_tree::`,
+or `void::`. These counts include possible type references; lack of a name
+cannot establish absence after inlining or optimization. This scan is not a
+complete final-link inventory or a conclusion about license obligations.

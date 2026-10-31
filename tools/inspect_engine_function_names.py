@@ -10,7 +10,8 @@ import json
 from pathlib import Path
 import re
 
-ENGINE='6736dce5b81479667da894deb15860999f43a4178b9e81eb68f1d10d3508db1b'
+ENGINES=frozenset({'6736dce5b81479667da894deb15860999f43a4178b9e81eb68f1d10d3508db1b',
+                   '4da6079da4a9bf6d1d48701895935bb97f3cfc197db38a771f693705c6d64ba3'})
 TERMS=('svg_fmt::','seahash::','content_analysis::sdk::','app_units::','debug_tree::','core_maths::','void::')
 PATTERNS={term:re.compile(r'(?<![A-Za-z0-9_])'+re.escape(term)) for term in TERMS}
 
@@ -27,7 +28,8 @@ def inspect(path):
     path=Path(path);size=path.stat().st_size;h=hashlib.sha256()
     with path.open('rb') as f:
         for chunk in iter(lambda:f.read(1024*1024),b''):h.update(chunk)
-    if h.hexdigest()!=ENGINE:raise ValueError('Not the pinned shipped engine')
+    digest=h.hexdigest()
+    if digest not in ENGINES:raise ValueError('Not a pinned shipped engine')
     counts={term:0 for term in TERMS};samples={term:[] for term in TERMS};total=None
     with path.open('rb') as f:
         if f.read(8)!=b'\x00asm\x01\x00\x00\x00':raise ValueError('Invalid WASM header')
@@ -58,7 +60,7 @@ def inspect(path):
                         f.seek(subend)
             f.seek(end)
     if total is None:raise ValueError('Function names unavailable')
-    return {'engineSHA256':ENGINE,'namedFunctions':total,'matches':counts,'samples':samples,
+    return {'engineSHA256':digest,'namedFunctions':total,'matches':counts,'samples':samples,
             'scope':'retained names and type references, not a complete linked component inventory'}
 
 if __name__=='__main__':
