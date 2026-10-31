@@ -1,0 +1,77 @@
+{
+  "files": {
+    "DownloadCore.sys.mjs": {
+      "modified": false,
+      "packagedSHA256": "7966feb1461cebb127a3deb286d0a815bcd0b0c869b6fc727ba6c42687c673e7",
+      "path": "toolkit/components/downloads/DownloadCore.sys.mjs",
+      "upstreamSHA256": "7966feb1461cebb127a3deb286d0a815bcd0b0c869b6fc727ba6c42687c673e7"
+    },
+    "DownloadHistory.sys.mjs": {
+      "modified": false,
+      "packagedSHA256": "36b907d370cc496bd3f05aa2dc70ca482c9a3dc95a24ccb543e79e3e08afd715",
+      "path": "toolkit/components/downloads/DownloadHistory.sys.mjs",
+      "upstreamSHA256": "36b907d370cc496bd3f05aa2dc70ca482c9a3dc95a24ccb543e79e3e08afd715"
+    },
+    "DownloadIntegration.sys.mjs": {
+      "modified": false,
+      "packagedSHA256": "6d94555e472f170b1c17ce98597c1e3967099b84322333a53e2308375ef797b2",
+      "path": "toolkit/components/downloads/DownloadIntegration.sys.mjs",
+      "upstreamSHA256": "6d94555e472f170b1c17ce98597c1e3967099b84322333a53e2308375ef797b2"
+    },
+    "DownloadLastDir.sys.mjs": {
+      "modified": false,
+      "packagedSHA256": "780268bd91ef998e5ae4cd5f8830dae3dfd108fda611636636da2df94440242f",
+      "path": "toolkit/mozapps/downloads/DownloadLastDir.sys.mjs",
+      "upstreamSHA256": "780268bd91ef998e5ae4cd5f8830dae3dfd108fda611636636da2df94440242f"
+    },
+    "DownloadLegacy.sys.mjs": {
+      "modified": true,
+      "packagedSHA256": "36be1713b9cbcad479fa74f59ff08b5649186845ff6e7b53ec8477496c3bc706",
+      "path": "toolkit/components/downloads/DownloadLegacy.sys.mjs",
+      "upstreamSHA256": "c2e94455e0e23114911401dfdf11be04426449217ea7fd29080c6a01644e0072"
+    },
+    "DownloadList.sys.mjs": {
+      "modified": false,
+      "packagedSHA256": "6662819a065dc711ef64d93ef25bb58b78fa3572313054723072db0962266a9a",
+      "path": "toolkit/components/downloads/DownloadList.sys.mjs",
+      "upstreamSHA256": "6662819a065dc711ef64d93ef25bb58b78fa3572313054723072db0962266a9a"
+    },
+    "DownloadPaths.sys.mjs": {
+      "modified": false,
+      "packagedSHA256": "286ddeebc32563798599f07fd95bce22cbcac49bd60f83f2ccb4f76c31695468",
+      "path": "toolkit/components/downloads/DownloadPaths.sys.mjs",
+      "upstreamSHA256": "286ddeebc32563798599f07fd95bce22cbcac49bd60f83f2ccb4f76c31695468"
+    },
+    "DownloadStore.sys.mjs": {
+      "modified": false,
+      "packagedSHA256": "97f369b052b9d030a8ff3a6af7217d77bc76b060675a37a8e118a08c23bc8dcb",
+      "path": "toolkit/components/downloads/DownloadStore.sys.mjs",
+      "upstreamSHA256": "97f369b052b9d030a8ff3a6af7217d77bc76b060675a37a8e118a08c23bc8dcb"
+    },
+    "DownloadUIHelper.sys.mjs": {
+      "modified": false,
+      "packagedSHA256": "5d18fe3582f926ac5c7fd1e4b0f5f9f46fc68af858cbefe6daa101410e406a82",
+      "path": "toolkit/components/downloads/DownloadUIHelper.sys.mjs",
+      "upstreamSHA256": "5d18fe3582f926ac5c7fd1e4b0f5f9f46fc68af858cbefe6daa101410e406a82"
+    },
+    "DownloadUtils.sys.mjs": {
+      "modified": false,
+      "packagedSHA256": "6df1610a085c292cdf5d9e7cac71b166460203120e2a844927d07b4196dbd4ee",
+      "path": "toolkit/mozapps/downloads/DownloadUtils.sys.mjs",
+      "upstreamSHA256": "6df1610a085c292cdf5d9e7cac71b166460203120e2a844927d07b4196dbd4ee"
+    },
+    "Downloads.sys.mjs": {
+      "modified": false,
+      "packagedSHA256": "a879ef5f2348aec6521cea9b6ef213b1d762dc61016d08fad6c5a825ef98e92d",
+      "path": "toolkit/components/downloads/Downloads.sys.mjs",
+      "upstreamSHA256": "a879ef5f2348aec6521cea9b6ef213b1d762dc61016d08fad6c5a825ef98e92d"
+    },
+    "HelperAppDlg.sys.mjs": {
+      "modified": true,
+      "packagedSHA256": "fca7ceff8bb12d43fe08fe29870433d6ff6f6ab31ceee94695e172cd102bfc7b",
+      "path": "toolkit/mozapps/downloads/HelperAppDlg.sys.mjs",
+      "upstreamSHA256": "54fd060c0407a4d9c9a2cc663ee27a9d6c81027456f285f948fab52db4b13dda"
+    }
+  },
+  "geckoCommit": "2e1e835a5da5907e5ceef19aade58a7493f1e34d"
+}

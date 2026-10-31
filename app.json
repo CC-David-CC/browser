@@ -1,1 +1,27 @@
-{"assets":["src/engine-worker.js","src/mailbox.mjs","src/policy.mjs","engine/manifest.json","engine/gecko.js","engine/gecko.wasm","engine/gecko.data","engine/wisp-client.mjs"]}
+{
+  "assets": [
+    "src/engine-worker.js",
+    "src/mailbox.mjs",
+    "src/policy.mjs",
+    "engine/manifest.json",
+    "engine/gecko.js",
+    "engine/gecko.wasm",
+    "engine/gecko.data",
+    "engine/wisp-client.mjs",
+    "src/guest-downloads.mjs",
+    "src/download-resources.mjs",
+    "engine-support/DownloadCore.sys.mjs",
+    "engine-support/DownloadHistory.sys.mjs",
+    "engine-support/DownloadIntegration.sys.mjs",
+    "engine-support/DownloadLastDir.sys.mjs",
+    "engine-support/DownloadLegacy.sys.mjs",
+    "engine-support/DownloadList.sys.mjs",
+    "engine-support/DownloadPaths.sys.mjs",
+    "engine-support/DownloadStore.sys.mjs",
+    "engine-support/DownloadUIHelper.sys.mjs",
+    "engine-support/DownloadUtils.sys.mjs",
+    "engine-support/Downloads.sys.mjs",
+    "engine-support/HelperAppDlg.sys.mjs",
+    "engine-support/SOURCES.json"
+  ]
+}

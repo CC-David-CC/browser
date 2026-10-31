@@ -10,6 +10,7 @@ import {styles} from './src/styles.mjs';
 export function mount(host) {
   const body=host.ui.make('div','window-content');
   const doc=body.ownerDocument;
+  const browserState=host.w?(host.w.browserDownloadState??={dirty:false}):{dirty:false};
   const usageOwner=host.storage?.signedInSubject?.();
   // The desktop sizes window-content below its title bar. Overriding that
   // height with 100% clips the status and diagnostics at the window bottom.
@@ -32,14 +33,15 @@ export function mount(host) {
   const stage=make('div','stage'),canvas=make('canvas'),info=make('div','info');
   canvas.width=config.width;canvas.height=config.height;canvas.tabIndex=0;canvas.setAttribute('aria-label','Independent browser viewport');
   info.textContent='Preparing browser…';stage.append(canvas,info);
-  const status=make('div','status','Preparing browser…'),details=make('details');
+  const status=make('div','status','Preparing browser…'),downloads=make('div','downloads'),details=make('details');
   details.append(make('summary','','Diagnostics'));const logs=make('pre','details');details.append(logs);
   const picker=make('input');picker.type='file';picker.accept='.html,.htm,text/html';picker.hidden=true;
   const keyboard=make('textarea','mobile-keyboard');keyboard.setAttribute('aria-label','Website keyboard input');keyboard.autocapitalize='off';keyboard.autocomplete='off';keyboard.spellcheck=false;
-  stage.append(keyboard);root.append(style,toolbar,warning,stage,status,details,picker);
+  stage.append(keyboard);root.append(style,toolbar,warning,stage,status,downloads,details,picker);
   const lifetime=new AbortController();
   let instance=null,runAbort=null,relay=null,disposed=false,generation=0,sizeTimer=0,reportTimer=0,reportPanel=null,seen=false,networkNotice='';
-  const logLines=[];
+  const logLines=[],downloadRows=new Map();
+  const markDownloadState=()=>{browserState.dirty=downloadRows.size>0;};
   const log=s=>{logLines.push(String(s).slice(0,2000));if(logLines.length>60)logLines.shift();logs.textContent=logLines.join('\n');};
   const setStatus=s=>{if(!disposed)status.textContent=s;};
   const setControls=on=>{for(const [k,b]of Object.entries(buttons))if(!['reset','back','forward'].includes(k))b.disabled=!on;go.disabled=!on;if(!on){buttons.back.disabled=true;buttons.forward.disabled=true;}};
@@ -92,7 +94,7 @@ export function mount(host) {
   }
   async function start(){
     if(disposed)return;const g=++generation;
-    clearTimeout(reportTimer);reportPanel?.remove();reportPanel=null;runAbort?.abort();instance?.dispose();relay?.close();relay=null;setControls(false);info.hidden=false;
+    clearTimeout(reportTimer);reportPanel?.remove();reportPanel=null;runAbort?.abort();instance?.dispose();relay?.close();relay=null;downloads.replaceChildren();downloadRows.clear();markDownloadState();setControls(false);info.hidden=false;
     info.textContent='Starting browser…';
     if(!globalThis.crossOriginIsolated||typeof SharedArrayBuffer==='undefined') {
       info.textContent='The browser could not start because this page is missing required isolation. Please contact the site administrator.';return;
@@ -126,6 +128,45 @@ export function mount(host) {
           networkNotice='The site or one of its resources was blocked by the server network policy'+(m.hostname?' ('+String(m.hostname).slice(0,253)+').':'.');setStatus(networkNotice);
         }else if(m.type==='network-throttled'){
           networkNotice='Browser network connection limit reached. Try again shortly.';setStatus(networkNotice);
+        }else if(m.type==='download-start'){
+          if(typeof m.name!=='string'||typeof m.id!=='string'||downloadRows.has(m.id))return;
+          const row=make('div','download-row');row.append(make('span','','Downloading '+m.name+'…'));
+          downloadRows.set(m.id,row);markDownloadState();downloads.append(row);setStatus('Downloading…');
+        }else if(m.type==='download-ready'){
+          if(typeof m.name!=='string'||typeof m.id!=='string'||!Number.isSafeInteger(m.size))return;
+          const row=downloadRows.get(m.id)||make('div','download-row'),label=make('span','',m.name+' ('+m.size+' bytes) — temporary until saved'),save=make('button','','Save to My files'),discard=make('button','','Discard');
+          row.replaceChildren();downloadRows.set(m.id,row);markDownloadState();
+          save.type=discard.type='button';
+          const finish=async keep=>{
+            save.disabled=true;discard.disabled=true;
+            try{
+              if(keep){
+                if(!host.storage?.mirrorFileContext)throw Error('Sign in to save downloads to My files.');
+                const requested=doc.defaultView.prompt('Save download in My files as:',m.name);if(requested===null)return;
+                const c=await host.storage.mirrorFileContext();if(!current(s,g)||!c.valid())return;
+                const name=c.name(requested),result=await s.request('download-read',{id:m.id});
+                if(!current(s,g)||!c.valid())return;
+                await c.files.write('/'+name,result.data);if(!current(s,g)||!c.valid())return;
+              }
+              try{await s.request('download-discard',{id:m.id});}
+              catch(error){
+                if(!keep)throw error;
+                if(current(s,g)){row.remove();downloadRows.delete(m.id);markDownloadState();log('Saved download, but its temporary copy could not be cleared: '+textError(error));setStatus('Saved on this device; server synchronization may continue in the background.');}
+                return;
+              }
+              if(!current(s,g))return;
+              row.remove();downloadRows.delete(m.id);markDownloadState();setStatus(keep?'Saved on this device; server synchronization may continue in the background.':'Download discarded.');
+            }catch(error){if(current(s,g))report(error);}
+            finally{save.disabled=false;discard.disabled=false;}
+          };
+          // Row-owned handlers disappear with the detached row; attaching them
+          // to the window lifetime signal would retain every completed row.
+          save.addEventListener('click',()=>void finish(true));
+          discard.addEventListener('click',()=>void finish(false));
+          row.append(label,save,discard);if(!row.isConnected)downloads.append(row);setStatus('Download ready. Save it to My files or discard it.');
+        }else if(m.type==='download-error'){
+          if(typeof m.id==='string'){downloadRows.get(m.id)?.remove();downloadRows.delete(m.id);markDownloadState();}
+          report(m.message);
         }else if(m.type==='domain-use'){
           if(usageOwner&&host.storage?.signedInSubject?.()===usageOwner)void recordDomain(usageOwner,m.hostname).catch(error=>log('Domain usage could not be saved on this device: '+textError(error)));
         }else if(m.type==='navigation'){
@@ -157,7 +198,7 @@ export function mount(host) {
   for(const name of ['back','forward','reload','stop'])buttons[name].addEventListener('click',()=>void operation('control',{action:name}),{signal:lifetime.signal});
   buttons.home.addEventListener('click',()=>void operation('open-html',{html:HOME_HTML}),{signal:lifetime.signal});
   buttons.keyboard.addEventListener('click',()=>{host.ui.enableKeyboard?.();keyboard.inputMode='text';keyboard.focus({preventScroll:true});},{signal:lifetime.signal});
-  buttons.reset.addEventListener('click',()=>void start(),{signal:lifetime.signal});
+  buttons.reset.addEventListener('click',()=>{if(downloads.childElementCount&&!doc.defaultView.confirm('Discard downloads that have not been saved?'))return;void start();},{signal:lifetime.signal});
   buttons.open.addEventListener('click',()=>picker.click(),{signal:lifetime.signal});
   buttons.download.addEventListener('click',async()=>{
     const s=instance,g=generation,connection=relay;
@@ -199,10 +240,11 @@ export function mount(host) {
     seen=entries[0]?.isIntersecting===true;instance?.notify('visibility',{visible:seen&&!doc.hidden});
   });io.observe(body);
   doc.addEventListener('visibilitychange',()=>instance?.notify('visibility',{visible:seen&&!doc.hidden}),{signal:lifetime.signal});
+  doc.defaultView.addEventListener('beforeunload',e=>{if(browserState.dirty){e.preventDefault();e.returnValue='';}},{signal:lifetime.signal});
   queueMicrotask(()=>{if(!disposed)void start();});
   return {element:body,dispose(){
     if(disposed)return;disposed=true;generation++;clearTimeout(sizeTimer);clearTimeout(reportTimer);
-    lifetime.abort();runAbort?.abort();ro.disconnect();io.disconnect();
+    browserState.dirty=false;lifetime.abort();runAbort?.abort();ro.disconnect();io.disconnect();
     instance?.dispose();instance=null;relay?.close();relay=null;canvas.width=1;canvas.height=1;
     // The desktop owns element removal. Do not close its Linux/network services.
   }};

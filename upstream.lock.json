@@ -6,5 +6,5 @@
   "reviewed_on": "2026-10-30",
   "engine_abi": "browser-gecko-mailbox-v1",
   "emscripten": "6.0.1",
-  "status": "built; browser rendering, account HTML opening, and authenticated external relay tested; ordinary clicked downloads not integrated"
+  "status": "built; browser rendering, account HTML opening, authenticated external relay, and clicked downloads tested; see docs for deployment and limitations"
 }

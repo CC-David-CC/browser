@@ -9,6 +9,7 @@ canvas{display:block;width:100%;height:100%;object-fit:fill;touch-action:none}
 .mobile-keyboard{position:absolute;left:0;bottom:0;width:2px;height:2px;opacity:.01;resize:none;padding:0;border:0}
 .info{position:absolute;inset:0;background:#111827;padding:24px;overflow:auto;white-space:pre-wrap;line-height:1.6}
 .info[hidden]{display:none}.status{flex:none;padding:6px 10px;background:#172033;white-space:pre-wrap;overflow-wrap:anywhere}
+.downloads{flex:none;max-height:120px;overflow:auto;background:#172033}.download-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 10px}.download-row span{overflow-wrap:anywhere;flex:1;min-width:120px}
 .details{max-height:160px;overflow:auto;background:#0b1322;margin:0;padding:8px;white-space:pre-wrap;font:11px ui-monospace,monospace}
 .warn{display:block;padding:5px 10px;font-size:12px;color:#fbbf24;background:#1f2937}
 `;

@@ -5,13 +5,19 @@ let moduleInstance=null, mailbox=null, ready=false, dead=false, starting=false;
 let hasDocument=false;
 let config=null, width=960, height=640, visible=true, frameOutstanding=false;
 let frameSeq=0, queue=[], pumping=false, timer=0, lastStatus=0, pageSeq=0;
+let guestDownloads=null, downloadTimer=0, downloadScanFailed=false;
 const abort=new AbortController(), connections=new Set(), blobURLs=[];
-const libraries=Promise.all([import('./mailbox.mjs'),import('./policy.mjs')]);
+const libraries=Promise.all([import('./mailbox.mjs'),import('./policy.mjs'),import('./guest-downloads.mjs'),import('./download-resources.mjs')]);
 libraries.catch(()=>{}); // Errors are reported by init, not left unhandled.
 const event=(type,fields={},transfer=[])=>{if(!dead)postMessage({kind:'event',type,...fields},transfer);};
-const reply=(id,ok,value)=>{if(!dead)postMessage(ok?{kind:'reply',id,ok:true,value}:{kind:'reply',id,ok:false,error:String(value).slice(0,4000)});};
+const reply=(id,ok,value)=>{
+  if(dead)return;
+  const message=ok?{kind:'reply',id,ok:true,value}:{kind:'reply',id,ok:false,error:String(value).slice(0,4000)};
+  const data=value?.data;
+  postMessage(message,ok&&data instanceof Uint8Array&&data.buffer instanceof ArrayBuffer?[data.buffer]:[]);
+};
 function shutdown(){
-  if(dead)return;dead=true;ready=false;abort.abort();clearTimeout(timer);queue.length=0;
+  if(dead)return;dead=true;ready=false;abort.abort();clearTimeout(timer);clearInterval(downloadTimer);guestDownloads=null;queue.length=0;
   for(const c of connections){try{c.close();}catch{}} connections.clear();
   try{moduleInstance?.PThread?.terminateAllThreads();}catch{}
   moduleInstance=null;mailbox=null;
@@ -35,7 +41,7 @@ async function verifiedBytes(asset){
 }
 async function init(payload){
   if(starting)throw new Error('Already initialized.');starting=true;
-  const [{Mailbox},policy]=await libraries;
+  const [{Mailbox},policy,{GuestDownloads},{DOWNLOAD_RESOURCES}]=await libraries;
   if(!self.crossOriginIsolated || typeof SharedArrayBuffer==='undefined') {
     throw new Error('Gecko pthreads require cross-origin isolation (COOP/COEP).');
   }
@@ -127,6 +133,26 @@ async function init(payload){
   if(typeof moduleInstance.PThread?.terminateAllThreads!=='function')throw new Error('Missing lifetime export. Apply the supplied native patch.');
   if(typeof moduleInstance._browser_embed_abi!=='function' || moduleInstance._browser_embed_abi()!==1)throw new Error('Native browser ABI patch missing.');
   mailbox=new Mailbox(moduleInstance,moduleInstance._xul_cmd_ptr(),config.commandTimeoutMs);
+  // The upstream minimal GRE omits download modules. Restore the reviewed
+  // exact-revision sources into this window's private, ephemeral guest FS.
+  moduleInstance.FS.mkdir('/browser-downloads');
+  moduleInstance.FS.mkdir('/browser-download-markers');
+  for(const asset of DOWNLOAD_RESOURCES){
+    const url=new URL('../engine-support/'+asset.name,base);
+    if(url.origin!==base.origin)throw Error('Download module must be same-origin.');
+    const bytes=await verifiedBytes({...asset,file:asset.name,url:url.href});
+    const target='/gre-baked/modules/'+asset.name;
+    // WasmFS writeFile does not reliably truncate an existing preloaded file.
+    if(asset.name==='HelperAppDlg.sys.mjs')moduleInstance.FS.truncate(target,0);
+    moduleInstance.FS.writeFile(target,bytes);
+    if(moduleInstance.FS.stat(target).size!==bytes.byteLength)throw Error('Could not stage browser download module.');
+  }
+  guestDownloads=new GuestDownloads(moduleInstance.FS,event);
+  downloadTimer=setInterval(()=>{
+    if(dead||!guestDownloads)return;
+    try{guestDownloads.scan();downloadScanFailed=false;}
+    catch(error){if(!downloadScanFailed){downloadScanFailed=true;event('download-error',{message:'Could not inspect browser downloads: '+String(error?.message||error)});}}
+  },500);
   moduleInstance.FS.mkdir('/browser-input');
   ready=true;scheduleTick();
   return {engine:'Gecko/WASM',profile:'ephemeral',network:!!Connection};
@@ -166,6 +192,14 @@ async function run(type,payload){
       const path=`/browser-input/page-${++pageSeq}.html`;
       moduleInstance.FS.writeFile(path,bytes);
       await native({op:OP.load,url:'file://'+path});hasDocument=true;return {};
+    }
+    case 'download-read':{
+      if(!guestDownloads)throw Error('Downloads are unavailable.');
+      return {data:guestDownloads.read(payload.id)};
+    }
+    case 'download-discard':{
+      if(!guestDownloads)throw Error('Downloads are unavailable.');
+      guestDownloads.discard(payload.id);return {};
     }
     case 'control':{
       const action={status:0,back:1,forward:2,reload:3,stop:4}[payload.action];

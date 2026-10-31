@@ -42,7 +42,7 @@ The engine is configured with an ephemeral in-memory profile and no host-file pr
 
 The Open HTML action copies a specifically selected file into the guest virtual filesystem. Other files inside that runtime, including previous imports and engine resources, are not proven to have per-page isolation. Treat placing a file into a guest as a grant to that runtime, not a capability securely scoped to one displayed document.
 
-There is no host clipboard bridge, background upload integration, native clicked-download integration or persistent profile directory. The explicit Download URL action can save to My files, but uses an independent fetch without the guest browser’s cookies. Do not add broad `host.files` authority to solve a single file transfer. Use explicit selection and the real desktop's permission model.
+There is no host clipboard bridge, background upload integration or persistent profile directory. In the development version, clicked downloads use Gecko's session and remain in a bounded temporary queue until the user chooses Save to My files. Reset or close discards them after a warning. The explicit Download URL action uses an independent fetch without the guest browser’s cookies. See `CLICKED_DOWNLOADS.md` for the implementation and its limits. Do not add broad `host.files` authority to solve a single file transfer.
 
 ## Availability and resource use
 
