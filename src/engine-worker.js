@@ -144,7 +144,7 @@ async function init(payload){
   await nativeReady;
   if(dead)throw new Error('Window closed during engine initialization.');
   if(typeof moduleInstance.PThread?.terminateAllThreads!=='function')throw new Error('Missing lifetime export. Apply the supplied native patch.');
-  if(typeof moduleInstance._browser_embed_abi!=='function' || moduleInstance._browser_embed_abi()!==2)throw new Error('Native browser ABI patch missing or incompatible.');
+  if(typeof moduleInstance._browser_embed_abi!=='function' || moduleInstance._browser_embed_abi()!==3)throw new Error('Native browser ABI patch missing or incompatible.');
   mailbox=new Mailbox(moduleInstance,moduleInstance._xul_cmd_ptr(),config.commandTimeoutMs,engineMemory);
   // The upstream minimal GRE omits download modules. Restore the reviewed
   // exact-revision sources into this window's private, ephemeral guest FS.
@@ -167,6 +167,8 @@ async function init(payload){
     catch(error){if(!downloadScanFailed){downloadScanFailed=true;event('download-error',{message:'Could not inspect browser downloads: '+String(error?.message||error)});}}
   },500);
   moduleInstance.FS.mkdir('/browser-input');
+  const initialStatus=(await mailbox.command({op:10,evType:0},width,height,abort.signal)).status;
+  if(initialStatus?.progressReady!==true)throw new Error('Native navigation progress is unavailable.');
   ready=true;scheduleTick();
   return {engine:'Gecko/WASM',profile:'ephemeral',network:!!Connection};
 }
@@ -178,7 +180,8 @@ function showFrame(r){
 }
 function emitStatus(s){
   if(!s || typeof s.url!=='string' || typeof s.canGoBack!=='boolean' || typeof s.canGoForward!=='boolean')throw new Error('Malformed native navigation status.');
-  event('navigation',{url:s.url.slice(0,16384),canGoBack:s.canGoBack,canGoForward:s.canGoForward});
+  if(s.progressReady!==true || !Number.isSafeInteger(s.sequence) || s.sequence<0 || !Number.isInteger(s.state) || s.state<0 || s.state>2 || !Number.isInteger(s.result) || s.result<0 || s.result>0xffffffff || !Number.isInteger(s.httpStatus) || s.httpStatus<0 || s.httpStatus>999)throw new Error('Malformed native navigation progress.');
+  event('navigation',{url:s.url.slice(0,16384),canGoBack:s.canGoBack,canGoForward:s.canGoForward,progress:{sequence:s.sequence,state:s.state,result:s.result,httpStatus:s.httpStatus}});
 }
 async function native(c){
   const r=await mailbox.command(c,width,height,abort.signal);

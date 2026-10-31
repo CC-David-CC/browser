@@ -1,4 +1,4 @@
-export const ENGINE_ABI = 'browser-gecko-mailbox-v2';
+export const ENGINE_ABI = 'browser-gecko-mailbox-v3';
 export const UPSTREAM_COMMIT = 'bc69aaa5e2c5388bcf93a43b975b490bb940f4c0';
 const enc = new TextEncoder();
 

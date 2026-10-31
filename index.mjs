@@ -1,3 +1,4 @@
+import {navigationFeedback} from './src/navigation-feedback.mjs';
 import {recordDomain,getDomainReport,wasReportSent,markReportSent} from './src/domain-usage.mjs';
 import {config} from './config.mjs';
 import {BrowserSession} from './src/session.mjs';
@@ -40,10 +41,12 @@ export function mount(host) {
   stage.append(keyboard);root.append(style,toolbar,warning,stage,status,downloads,details,picker);
   const lifetime=new AbortController();
   let instance=null,runAbort=null,relay=null,disposed=false,generation=0,sizeTimer=0,reportTimer=0,reportPanel=null,seen=false,networkNotice='';
+  let navigationEpoch=0,pendingNavigation=0,lastProgressSequence=-1,statusOwner='general';
   const logLines=[],downloadRows=new Map();
   const markDownloadState=()=>{browserState.dirty=downloadRows.size>0;};
   const log=s=>{logLines.push(String(s).slice(0,2000));if(logLines.length>60)logLines.shift();logs.textContent=logLines.join('\n');};
-  const setStatus=s=>{if(!disposed)status.textContent=s;};
+  const setStatus=(s,owner='general')=>{if(!disposed){statusOwner=owner;status.textContent=s;}};
+  const setNavigationStatus=s=>setStatus(s,'navigation');
   const setControls=on=>{for(const [k,b]of Object.entries(buttons))if(!['reset','back','forward'].includes(k))b.disabled=!on;go.disabled=!on;if(!on){buttons.back.disabled=true;buttons.forward.disabled=true;}};
   const report=e=>{if(!disposed){setStatus(textError(e));log(textError(e));}};
   const current=(s,g)=>!disposed&&instance===s&&generation===g;
@@ -83,8 +86,9 @@ export function mount(host) {
   }
   async function operation(type,payload={},transfer=[]) {
     const s=instance,g=generation;if(!s||s.state!=='ready')return;
-    try{networkNotice='';setStatus('Loading…');await s.request(type,payload,undefined,transfer);if(current(s,g))setStatus(networkNotice||(payload.action==='stop'?'Stopped.':'Navigation requested.'));}
-    catch(e){if(current(s,g))report(e);}
+    const epoch=++navigationEpoch;pendingNavigation=epoch;
+    try{networkNotice='';setNavigationStatus('Loading…');await s.request(type,payload,undefined,transfer);if(current(s,g)&&epoch===navigationEpoch){pendingNavigation=0;if(networkNotice)setStatus(networkNotice);else setNavigationStatus(payload.action==='stop'?'Stopped.':'Navigation requested.');}}
+    catch(e){if(current(s,g)&&epoch===navigationEpoch){pendingNavigation=0;report(e);}}
   }
   function applySize(){
     clearTimeout(sizeTimer);sizeTimer=0;
@@ -93,7 +97,7 @@ export function mount(host) {
     if(instance?.state==='ready')instance.notify('resize',d);
   }
   async function start(){
-    if(disposed)return;const g=++generation;
+    if(disposed)return;const g=++generation;navigationEpoch++;pendingNavigation=0;lastProgressSequence=-1;
     clearTimeout(reportTimer);reportPanel?.remove();reportPanel=null;runAbort?.abort();instance?.dispose();relay?.close();relay=null;licenses.removeAttribute('href');licenses.setAttribute('aria-disabled','true');downloads.replaceChildren();downloadRows.clear();markDownloadState();setControls(false);info.hidden=false;
     info.textContent='Starting browser…';
     if(!globalThis.crossOriginIsolated||typeof SharedArrayBuffer==='undefined') {
@@ -173,6 +177,9 @@ export function mount(host) {
           // Native nsIWebNavigation status, not a page-controlled JS location hook.
           if(root.activeElement!==address)address.value=m.url;
           buttons.back.disabled=!m.canGoBack;buttons.forward.disabled=!m.canGoForward;
+          if(!pendingNavigation && !networkNotice && statusOwner==='navigation' && m.progress?.sequence>lastProgressSequence){
+            try{const message=navigationFeedback(m.progress);lastProgressSequence=m.progress.sequence;if(message)setNavigationStatus(message);}catch(error){log(textError(error));}
+          }
         }else if(m.type==='log'){log(m.message);}
         else if(m.type==='status'){setStatus(m.message);}
         else if(m.type==='error'){report(m.message);if(m.fatal||s.closed){setControls(false);info.hidden=false;info.textContent=m.message;}}
@@ -186,7 +193,7 @@ export function mount(host) {
       s.notify('visibility',{visible:seen&&!doc.hidden});
       applySize();
       await s.request('open-html',{html:HOME_HTML});
-      if(current(s,g))setStatus(endpoint?'Ready':'Offline: websites are unavailable. You can still open an HTML file.');
+      if(current(s,g))setNavigationStatus(endpoint?'Ready':'Offline: websites are unavailable. You can still open an HTML file.');
     }catch(e){if(current(s,g)){setControls(false);info.hidden=false;info.textContent=textError(e);report(e);s.dispose();}}
   }
   root.addEventListener('keydown',e=>{
