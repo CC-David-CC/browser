@@ -24,6 +24,7 @@ SOURCES={
  'codi-browser-source-2ed6d0259.tar.zst':'49f1c63f6160a58d9d6624d5baa35589fae1a74580f32cbb8883f71f9a203b0b',
  'codi-browser-source-0488c275e.tar.zst':'841993d069a9d824942224b2e34012a1dc56ce6c24f3407b920adaa4f2d7e0cd',
  'codi-browser-source-802621ec2.tar.zst':'128c33ee16a6dde95f5c594b19ef6c8a05cb9b251024e95ac859f888b3a26c90',
+ 'codi-browser-source-485928f3f.tar.zst':'e3d823eeb3d042ca051f7b12c2c775a945660036c7ec3ca55bd07588e32bf968',
  'codi-relay-source-05e70e3b0.tar.zst':'6031d72c1c102de2260a634e9e1b8b559f8cccf292b6512e9270e348f2df5ef9',
 }
 FIREFOX_LICENSE_SHA='e84624c9655b7d4d28a35e1539fdba8420b141ed4d12c791ab7a53e996a84701'

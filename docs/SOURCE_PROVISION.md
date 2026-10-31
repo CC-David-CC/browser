@@ -144,3 +144,9 @@ that exact revision, SHA-256
 and is included in the combined public notices. The crates' source files also
 retain their original copyright headers. This covers the observed missing
 file without claiming that all remaining license questions are resolved.
+
+The source archive corresponding to the deployed file-mirror update is
+`https://ksu.codes/browser-sources/codi-browser-source-485928f3f.tar.zst`,
+SHA-256 `e3d823eeb3d042ca051f7b12c2c775a945660036c7ec3ca55bd07588e32bf968`.
+It is linked from the public source index; this update does not resolve the
+remaining audit limitations described above.
