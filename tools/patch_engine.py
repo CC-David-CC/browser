@@ -13,7 +13,7 @@ def replace_once(text,old,new,label):
 
 def transformed(files,source):
     result=dict(files)
-    result['gecko.js/src/embed-xul.h'] += '\n// browser.zip native navigation extension\nchar* browser_host_control(int action);\n'
+    result['gecko.js/src/embed-xul.h'] += '\n// browser.zip native navigation extension\nchar* browser_host_control(int action);\nuint32_t browser_progress_mark();\nbool browser_progress_failed_since(uint32_t mark);\n'
     path='gecko.js/src/embed-xul.cpp';s=result[path]
     s=replace_once(s,'        case 9:  // set clipboard text',
         '        case 10:  // browser.zip: native navigation/status, not page eval\n'
@@ -25,6 +25,8 @@ def transformed(files,source):
         'if ((g_cmd->op >= 5 && g_cmd->op <= 8) || g_cmd->op == 10) {','native string-result route')
     result[path]=s
     path='gecko.js/src/embed-browser.cpp';s=result[path]
+    s=replace_once(s,'  if (g_isChrome) {\n    // browser.xhtml is already loading',
+        '  const uint32_t progressMark = browser_progress_mark();\n  if (g_isChrome) {\n    // browser.xhtml is already loading','navigation progress mark')
     s=replace_once(s,
         '  uint32_t spins = 0;\n  SpinEventLoopUntil("xul_load"_ns, [&]() -> bool {\n    PresShell* p = ds->GetPresShell();',
         '  uint32_t spins = 0;\n  bool canceled = false;\n  SpinEventLoopUntil("xul_load"_ns, [&]() -> bool {\n'
@@ -32,7 +34,9 @@ def transformed(files,source):
         '    if (g_cmd && __atomic_exchange_n(&g_cmd->evType, 0, __ATOMIC_SEQ_CST) == kCancelNavigation) {\n'
         '      nsCOMPtr<nsIWebNavigation> nav = do_QueryInterface(ds);\n'
         '      if (nav) nav->Stop(nsIWebNavigation::STOP_ALL);\n'
-        '      canceled = true;\n      return true;\n    }\n    PresShell* p = ds->GetPresShell();',
+        '      canceled = true;\n      return true;\n    }\n'
+        '    if (browser_progress_failed_since(progressMark)) { canceled = true; return true; }\n'
+        '    PresShell* p = ds->GetPresShell();',
         'navigation cancellation check')
     s=replace_once(s,
         '  printf("xul_load: spun %u, ready\\n", spins);\n  fflush(stdout);\n\n  // Make our content window',

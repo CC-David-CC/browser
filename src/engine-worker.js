@@ -167,8 +167,6 @@ async function init(payload){
     catch(error){if(!downloadScanFailed){downloadScanFailed=true;event('download-error',{message:'Could not inspect browser downloads: '+String(error?.message||error)});}}
   },500);
   moduleInstance.FS.mkdir('/browser-input');
-  const initialStatus=(await mailbox.command({op:10,evType:0},width,height,abort.signal)).status;
-  if(initialStatus?.progressReady!==true)throw new Error('Native navigation progress is unavailable.');
   ready=true;scheduleTick();
   return {engine:'Gecko/WASM',profile:'ephemeral',network:!!Connection};
 }
@@ -195,7 +193,7 @@ async function run(type,payload){
     case 'navigate':{
       const url=policy.normalizeNavigation(payload.url);
       if(url!=='about:blank'&&!config.wispURL)throw new Error('No network relay configured. Use Home or Open HTML for offline pages.');
-      await native({op:OP.load,url});hasDocument=true;return {};
+      await native({op:OP.load,url});hasDocument=true;await native({op:OP.control,evType:0});return {};
     }
     case 'open-html':{
       const bytes=payload.data instanceof ArrayBuffer?new Uint8Array(payload.data):typeof payload.html==='string'?new TextEncoder().encode(payload.html):null;
@@ -207,7 +205,7 @@ async function run(type,payload){
       const path=`/browser-input/page-${++pageSeq}.html`;
       moduleInstance.FS.writeFile(path,bytes);
       config.importedBytes=(config.importedBytes??0)+bytes.byteLength;
-      await native({op:OP.load,url:'file://'+path});hasDocument=true;return {};
+      await native({op:OP.load,url:'file://'+path});hasDocument=true;await native({op:OP.control,evType:0});return {};
     }
     case 'download-read':{
       if(!guestDownloads)throw Error('Downloads are unavailable.');

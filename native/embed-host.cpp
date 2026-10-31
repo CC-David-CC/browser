@@ -39,12 +39,12 @@ class BrowserProgressListener final : public nsIWebProgressListener, public nsSu
 };
 NS_IMPL_ISUPPORTS(BrowserProgressListener, nsIWebProgressListener, nsISupportsWeakReference)
 static nsCOMPtr<nsIWebProgressListener> sProgressListener;
-static uint32_t sProgressSequence = 0, sProgressState = 0, sHttpStatus = 0;
+static uint32_t sProgressSequence = 0, sProgressStarts = 0, sProgressState = 0, sHttpStatus = 0;
 static nsresult sProgressResult = NS_OK;
 NS_IMETHODIMP BrowserProgressListener::OnStateChange(nsIWebProgress* progress, nsIRequest* request, uint32_t flags, nsresult status) {
   bool top = false;
   if (!progress || NS_FAILED(progress->GetIsTopLevel(&top)) || !top || !(flags & STATE_IS_NETWORK)) return NS_OK;
-  if (flags & STATE_START) { ++sProgressSequence; sProgressState=1; sProgressResult=NS_OK; sHttpStatus=0; }
+  if (flags & STATE_START) { ++sProgressStarts; ++sProgressSequence; sProgressState=1; sProgressResult=NS_OK; sHttpStatus=0; }
   if (flags & STATE_STOP) {
     ++sProgressSequence; sProgressState=2; sProgressResult=status; sHttpStatus=0;
     nsCOMPtr<nsIHttpChannel> channel=do_QueryInterface(request);
@@ -63,6 +63,14 @@ static void AttachProgressListener() {
   if(!progress)return;
   nsCOMPtr<nsIWebProgressListener> listener=new BrowserProgressListener();
   if(NS_SUCCEEDED(progress->AddProgressListener(listener,nsIWebProgress::NOTIFY_STATE_NETWORK)))sProgressListener=listener;
+}
+
+// Called by xul_load after creating the docshell, before starting a load.
+uint32_t browser_progress_mark() { AttachProgressListener(); return sProgressStarts; }
+bool browser_progress_failed_since(uint32_t mark) {
+  // A redirect may cancel its preceding request; do not treat that as failure.
+  return sProgressStarts!=mark && sProgressState==2 && NS_FAILED(sProgressResult) &&
+         static_cast<uint32_t>(sProgressResult)!=0x804b0002u;
 }
 
 // 0 status, 1 back, 2 forward, 3 reload, 4 stop. Native navigation is authoritative.
