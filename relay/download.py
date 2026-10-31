@@ -12,7 +12,7 @@ from pathlib import PurePosixPath
 from aiohttp import ClientSession, ClientTimeout, TCPConnector, hdrs
 from aiohttp.abc import AbstractResolver
 from yarl import URL
-from .policy import DestinationPolicy, PolicyDenied
+from .policy import DestinationPolicy, PolicyDenied, DownloadTooLarge
 
 MAX_DOWNLOAD=128*1024*1024
 MAX_REDIRECTS=5
@@ -70,7 +70,7 @@ class Downloader:
                     if response.status!=200:raise PolicyDenied('Download server returned HTTP '+str(response.status))
                     if response.headers.get('Content-Encoding','identity').lower() not in ('','identity'):
                         raise PolicyDenied('Compressed download response is not supported')
-                    if response.content_length is not None and response.content_length>MAX_DOWNLOAD:raise PolicyDenied('Download is larger than 128 MiB')
+                    if response.content_length is not None and response.content_length>MAX_DOWNLOAD:raise DownloadTooLarge('Download is larger than 128 MiB')
                     # Keep large downloads on private temporary disk rather than
                     # accumulating a copy in the relay's memory. The caller owns
                     # and must close the unlinked temporary file.
@@ -82,7 +82,7 @@ class Downloader:
                                 if hasattr(self.relay,'check_stream'):self.relay.check_stream(name,port,ip)
                                 else:self.relay.network_check(ip)
                             size+=len(chunk)
-                            if size>MAX_DOWNLOAD:raise PolicyDenied('Download is larger than 128 MiB')
+                            if size>MAX_DOWNLOAD:raise DownloadTooLarge('Download is larger than 128 MiB')
                             await disk_io(content.write,chunk)
                         await disk_io(content.seek,0)
                         filename=response.content_disposition.filename if response.content_disposition else None

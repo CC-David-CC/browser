@@ -16,6 +16,10 @@ import threading
 class PolicyDenied(ValueError):
     pass
 
+class DownloadTooLarge(PolicyDenied):
+    """A remote download exceeds the user-visible file size limit."""
+    pass
+
 def hostname(value):
     if not isinstance(value, str) or not value or len(value) > 254 or value != value.strip():
         raise PolicyDenied('Invalid destination hostname')
