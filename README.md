@@ -5,14 +5,12 @@ visitor's browser, painting into its own desktop window. Pages do not receive
 CodiServer app services. Each window owns its engine worker and temporary
 profile; closing or resetting it discards that profile.
 
-**Status:** the pinned Gecko engine was built and exercised in an isolated
-Chrome harness. An offline HTML test page rendered, ran JavaScript, accepted
-mouse and keyboard input, and two engine windows ran independently. It is integrated into an isolated local desktop test, but is not on the live
-site. Public website access also needs an
-authenticated, policy-controlled Wisp relay. That backend is now live and
-has passed registered-account admission and basic policy checks, but the
-Browser app and engine are not yet deployed. It is not ready for sensitive
-browsing or untrusted users.
+**Status:** the Browser app, pinned Gecko engine, and authenticated,
+policy-controlled Wisp relay are live at ksu.codes. Registered-account tests
+cover basic navigation, destination policy, HTML opening, clicked downloads,
+and independent windows. Desktop and phone-sized tests do not establish
+broad website compatibility or replace a security audit. It is not ready for
+sensitive browsing or untrusted users.
 
 The regular app builder packages the entry and worker support declared in
 `app.json`. A usable build also needs the actual engine assets and corresponding
@@ -145,15 +143,14 @@ an allowed HTTPS page, rejected a blacklisted domain and private addresses,
 opened a Wisp connection, then removed the test account. Broader site
 compatibility and real phone use remain to be verified.
 
-The current source-only relay prototype implements bounded Wisp v1 TCP streams,
+The relay implements bounded Wisp v1 TCP streams,
 checks the destination policy before resolving and connects only to a vetted
 public address. Its test fixture exercised a real Gecko request through the
 relay, rejected a YouTube request before DNS lookup, and stored signed domain
 requests in the test browser. That earlier fixture supplied a fake test identity and local destination. A
 later isolated desktop test used the real local issuer and rendered a public
 HTTPS page through the authenticated relay. The backend endpoint is now public
-and requires a registered, signed session for networking; the app itself is
-not yet live. These checks are not a broad website compatibility or security
+and requires a registered, signed session for networking. These checks are not a broad website compatibility or security
 audit. Optional server audit remains disconnected and disabled.
 
 IP-range and country controls are independent of the domain lists. Their
@@ -161,10 +158,9 @@ source template and rollout notes are in `active-system/network_policy/README.md
 They cover live login and Browser relay traffic; other egress paths are not
 yet covered by these shared rules.
 
-The request coordinator stores received reports only after an explicit administrator
-request; it requires a private database and a configured administrator account ID.
-Its authentication callback and delivery transport are not yet connected. The
-operator can remove stored request results. Device-reported usage is not a
+The live request coordinator stores received reports only after an explicit
+administrator request; it uses a private database and configured administrator
+account ID. The operator can remove stored request results. Device-reported usage is not a
 complete or independently verified account of what a person did.
 
 ## Phone input (development)
