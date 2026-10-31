@@ -1,4 +1,4 @@
-import {recordDomain} from './src/domain-usage.mjs';
+import {recordDomain,getDomainReport,wasReportSent,markReportSent} from './src/domain-usage.mjs';
 import {config} from './config.mjs';
 import {BrowserSession} from './src/session.mjs';
 import {normalizeNavigation,boundedSize,relayURL,textError} from './src/policy.mjs';
@@ -36,13 +36,47 @@ export function mount(host) {
   const keyboard=make('textarea','mobile-keyboard');keyboard.setAttribute('aria-label','Website keyboard input');keyboard.autocapitalize='off';keyboard.autocomplete='off';keyboard.spellcheck=false;
   stage.append(keyboard);root.append(style,toolbar,warning,stage,status,details,picker);
   const lifetime=new AbortController();
-  let instance=null,runAbort=null,relay=null,disposed=false,generation=0,sizeTimer=0,seen=false;
+  let instance=null,runAbort=null,relay=null,disposed=false,generation=0,sizeTimer=0,reportTimer=0,reportPanel=null,seen=false;
   const logLines=[];
   const log=s=>{logLines.push(String(s).slice(0,2000));if(logLines.length>60)logLines.shift();logs.textContent=logLines.join('\n');};
   const setStatus=s=>{if(!disposed)status.textContent=s;};
   const setControls=on=>{for(const [k,b]of Object.entries(buttons))if(!['reset','back','forward'].includes(k))b.disabled=!on;go.disabled=!on;if(!on){buttons.back.disabled=true;buttons.forward.disabled=true;}};
   const report=e=>{if(!disposed){setStatus(textError(e));log(textError(e));}};
   const current=(s,g)=>!disposed&&instance===s&&generation===g;
+  async function sendRequestedReports(connection,g){
+    if(!connection?.reports||!usageOwner||disposed||generation!==g)return;
+    try{
+      const requests=await connection.reports.pending();
+      if(!Array.isArray(requests)||requests.length>16)throw Error('Invalid domain report requests.');
+      for(const request of requests){
+        if(disposed||generation!==g||host.storage?.signedInSubject?.()!==usageOwner)return;
+        if(!request||typeof request.id!=='string'||!/^[A-Za-z0-9_-]{32}$/.test(request.id))throw Error('Invalid domain report request.');
+        if(await wasReportSent(usageOwner,request.id))continue;
+        const data=await getDomainReport(usageOwner);if(!data.publicKey||!data.events.length)continue;
+        if(disposed||generation!==g||host.storage?.signedInSubject?.()!==usageOwner)return;
+        await connection.reports.submit(request.id,data);
+        if(disposed||generation!==g||host.storage?.signedInSubject?.()!==usageOwner)return;
+        await markReportSent(usageOwner,request.id);log('A site administrator requested this device’s domain-usage report; it was sent.');
+      }
+    }catch(error){if(!disposed&&generation===g)log('Requested domain report could not be sent: '+textError(error));}
+    finally{if(!disposed&&generation===g)reportTimer=setTimeout(()=>void sendRequestedReports(connection,g),30000);}
+  }
+  async function prepareReportAdmin(connection,g){
+    if(!connection?.reports)return;
+    try{
+      const role=await connection.reports.role();if(disposed||generation!==g||role?.admin!==true)return;
+      const panel=make('section','report-admin'),label=make('h3','','Domain usage reports'),note=make('p','','Requests collect signed domain-only records from browsers that are open during the request. Records can be incomplete and do not prove who used a device.'),select=make('select'),output=make('pre','details');
+      select.setAttribute('aria-label','Domain usage report request');
+      const request=make('button','','Request reports for one hour'),refresh=make('button','','Refresh requests'),show=make('button','','Show totals');
+      for(const b of [request,refresh,show])b.type='button';
+      const update=async()=>{const rows=await connection.reports.list();if(disposed||generation!==g)return;if(!Array.isArray(rows)||rows.length>100)throw Error('Invalid report request list.');select.replaceChildren();for(const item of rows){if(!item||!/^[A-Za-z0-9_-]{32}$/.test(item.id)||!Number.isSafeInteger(item.created))throw Error('Invalid report request.');const option=make('option','',new Date(item.created*1000).toLocaleString());option.value=item.id;select.append(option);}};
+      const action=fn=>async()=>{try{await fn();}catch(error){if(!disposed&&generation===g)output.textContent=textError(error);}};
+      request.addEventListener('click',action(async()=>{await connection.reports.create(3600);await update();output.textContent='Report requested. Open browsers can respond during the next hour.';}),{signal:lifetime.signal});
+      refresh.addEventListener('click',action(update),{signal:lifetime.signal});
+      show.addEventListener('click',action(async()=>{if(!select.value)throw Error('Choose a report request first.');const result=await connection.reports.summary(select.value);if(disposed||generation!==g)return;if(!result||!Number.isSafeInteger(result.devices)||!Array.isArray(result.domains))throw Error('Invalid report totals.');output.textContent=result.devices+' device(s)\n'+result.domains.map(row=>String(row.domain)+'  '+String(row.requests)).join('\n');}),{signal:lifetime.signal});
+      panel.append(label,note,request,refresh,select,show,output);details.append(panel);reportPanel=panel;await update();
+    }catch(error){if(!disposed&&generation===g)log('Domain report administration unavailable: '+textError(error));}
+  }
   async function operation(type,payload={}) {
     const s=instance,g=generation;if(!s||s.state!=='ready')return;
     try{await s.request(type,payload);if(current(s,g)&&type!=='control')setStatus('Loading…');}
@@ -56,7 +90,7 @@ export function mount(host) {
   }
   async function start(){
     if(disposed)return;const g=++generation;
-    runAbort?.abort();instance?.dispose();relay?.close();relay=null;setControls(false);info.hidden=false;
+    clearTimeout(reportTimer);reportPanel?.remove();reportPanel=null;runAbort?.abort();instance?.dispose();relay?.close();relay=null;setControls(false);info.hidden=false;
     info.textContent='Starting browser…';
     if(!globalThis.crossOriginIsolated||typeof SharedArrayBuffer==='undefined') {
       info.textContent='The browser could not start because this page is missing required isolation. Please contact the site administrator.';return;
@@ -66,7 +100,7 @@ export function mount(host) {
       if(host.browserRelay?.available()){
         const opened=await host.browserRelay.open({onFailure:error=>{if(generation===g&&!disposed){setStatus('Browser network disconnected: '+textError(error));instance?.dispose();setControls(false);info.hidden=false;info.textContent='Network connection ended. Use Reset engine to reconnect.';}}});
         if(disposed||generation!==g){opened.close();return;}
-        relay=opened;
+        relay=opened;void sendRequestedReports(opened,g);void prepareReportAdmin(opened,g);
       }
       endpoint=relayURL(relay?.url??config.wispURL,doc.location.href);
     }catch(e){report(e);info.textContent=textError(e);return;}
@@ -161,7 +195,7 @@ export function mount(host) {
   doc.addEventListener('visibilitychange',()=>instance?.notify('visibility',{visible:seen&&!doc.hidden}),{signal:lifetime.signal});
   queueMicrotask(()=>{if(!disposed)void start();});
   return {element:body,dispose(){
-    if(disposed)return;disposed=true;generation++;clearTimeout(sizeTimer);
+    if(disposed)return;disposed=true;generation++;clearTimeout(sizeTimer);clearTimeout(reportTimer);
     lifetime.abort();runAbort?.abort();ro.disconnect();io.disconnect();
     instance?.dispose();instance=null;relay?.close();relay=null;canvas.width=1;canvas.height=1;
     // The desktop owns element removal. Do not close its Linux/network services.

@@ -1,5 +1,5 @@
 /** Device-local, account-scoped signed domain events. No URL paths or contents. */
-const DB='codi-browser-domain-usage',VERSION=2,enc=new TextEncoder();
+const DB='codi-browser-domain-usage',VERSION=3,enc=new TextEncoder();
 function open(){return new Promise((resolve,reject)=>{
   const request=indexedDB.open(DB,VERSION);
   request.onupgradeneeded=()=>{
@@ -7,6 +7,7 @@ function open(){return new Promise((resolve,reject)=>{
     if(!db.objectStoreNames.contains('keys'))db.createObjectStore('keys',{keyPath:'scope'});
     if(!db.objectStoreNames.contains('heads'))db.createObjectStore('heads',{keyPath:'scope'});
     if(!db.objectStoreNames.contains('events')){const store=db.createObjectStore('events',{keyPath:['scope','seq']});store.createIndex('scope','scope');}
+    if(!db.objectStoreNames.contains('reported'))db.createObjectStore('reported',{keyPath:['scope','request']});
   };
   request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
 });}
@@ -49,6 +50,14 @@ export async function getDomainReport(subject){
     const [key,events]=await Promise.all([requestResult(keyRequest),requestResult(eventsRequest)]);
     return {version:1,scope,publicKey:key?.publicKey||null,events:events.map(({seq,prev,domain,at,hash,signature})=>({seq,prev,domain,at,hash,signature}))};
   }finally{db.close();}});
+}
+export async function wasReportSent(subject,request){
+  const scope=scopeFor(subject);if(typeof request!=='string'||!/^[A-Za-z0-9_-]{32}$/.test(request))throw Error('Invalid report request');
+  return locked(scope,async()=>{const db=await open();try{return !!(await requestResult(db.transaction('reported','readonly').objectStore('reported').get([scope,request])));}finally{db.close();}});
+}
+export async function markReportSent(subject,request){
+  const scope=scopeFor(subject);if(typeof request!=='string'||!/^[A-Za-z0-9_-]{32}$/.test(request))throw Error('Invalid report request');
+  return locked(scope,async()=>{const db=await open();try{const tx=db.transaction('reported','readwrite');tx.objectStore('reported').put({scope,request});await complete(tx);}finally{db.close();}});
 }
 /** Verify content and signatures; a separately saved head detects truncation. */
 export async function verifyDomainReport(report,expectedHead=null){

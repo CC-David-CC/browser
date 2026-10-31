@@ -35,11 +35,19 @@ class ReportRequests:
         sub=self.principal(principal)
         if sub not in self.admins:raise PermissionError('Administrator required')
         return sub
+    def role(self,principal):return {'admin':self.principal(principal) in self.admins}
+    def list_admin(self,principal):
+        self.admin(principal)
+        with self.db() as db:
+            return [{'id':row[0],'created':row[1],'expires':row[2]} for row in db.execute('SELECT id,created,expires FROM requests ORDER BY created DESC,id DESC LIMIT 100')]
     def create(self,principal,seconds=3600):
         owner=self.admin(principal)
         if type(seconds) is not int or not 60<=seconds<=86400:raise ValueError('Request duration must be 60–86400 seconds')
         now=int(self.clock());token=secrets.token_urlsafe(24)
-        with self.db() as db:db.execute('INSERT INTO requests VALUES(?,?,?,?)',(token,now,now+seconds,owner))
+        with self.db() as db:
+            db.execute('BEGIN IMMEDIATE')
+            if db.execute('SELECT count(*) FROM requests WHERE expires>?',(now,)).fetchone()[0]>=16:raise ValueError('Too many active report requests')
+            db.execute('INSERT INTO requests VALUES(?,?,?,?)',(token,now,now+seconds,owner));db.commit()
         return {'id':token,'created':now,'expires':now+seconds}
     def pending(self,principal):
         self.principal(principal)

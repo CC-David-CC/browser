@@ -32,8 +32,10 @@ sources was made from Git commit `59dfaf024` with SHA-256
 `00e499a9c5e8c812666616023f4d02e98f49696b7fc7d85040123a93ebe0ea34`.
 The desktop release candidate uses source snapshot `0fc6bf9a7` with SHA-256
 `47ac4d287646b42b808680e2be422e4a7a7bf62dcd928b6ae911bf4a2c91bbe4`;
-both snapshots are retained at `/browser-sources/`. This does not mean that
-the desktop candidate itself has been deployed.
+the newer candidate uses source snapshot `adece7482`, SHA-256
+`2e64c1c3856f622af986157059eca6f8f14a8c73e275829d397372b70701c127`.
+All three snapshots are retained at `/browser-sources/`. This does not mean
+that either desktop candidate has been deployed.
 The running relay's source snapshot is commit `05e70e3b0` with SHA-256
 `6031d72c1c102de2260a634e9e1b8b559f8cccf292b6512e9270e348f2df5ef9`.
 The engine's built output and generated archives do not belong in Git.
@@ -54,3 +56,11 @@ symbols, including file-picker and audio functions; this is a separate
 functionality limitation that requires investigation before promising ordinary
 website compatibility. Update the source archive whenever the shipped Browser
 source or engine build changes.
+
+The build's Gecko-generated license page lists SoundTouch, FFmpeg and Libav as
+LGPL possibilities. Inspection of the actual `libxul.stripped.so` defined and
+undefined symbols found no defined SoundTouch implementation: the fourteen
+`RLBoxSoundTouch` references are unresolved. `libgkcodecs.stripped.so` showed
+no defined `avcodec_`, `avformat_`, `avutil_` or SoundTouch symbols in the same
+inspection. This is evidence about these symbols, not a complete link inventory
+or a legal conclusion. Complete linked-component and LGPL review still remains.

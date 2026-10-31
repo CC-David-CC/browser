@@ -1,0 +1,30 @@
+# Requested domain-usage reports
+
+This feature is in local development and is not enabled on the live service.
+The Browser records domain names and timestamps in account-scoped storage on
+the current device. It does not record page paths or page contents. Existing
+browser data can be cleared by the device owner. No report is sent unless a
+configured administrator creates a time-limited request while the Browser is
+open. A browser with data sends one snapshot for that request and keeps a
+local receipt to avoid repeated submissions. Other devices respond separately.
+
+An authorized administrator can use Browser → Diagnostics → Domain usage
+reports to request a report for one hour and view totals across responding
+devices. Reports are held on the server until an administrator removes them;
+the operator API also supports per-account totals and deleting a request and
+its stored reports. Only configured registered administrator subjects can
+create, list, summarize or remove requests. All signed-in accounts can see
+active requests and submit only their own signed browser report.
+
+Each event is signed by a device-held key and linked to the previous event.
+The server verifies the chain, signature, origin and authenticated account
+scope. A signature proves that this key signed the submitted data; it does not
+prove a human identity, that timestamps are accurate, or that the device
+reported every domain. Clearing browser storage can remove the history or key.
+
+To enable the service, a root-owned administrator-subject list and a private
+service-owned report database must be configured explicitly. The service
+renderer's optional `--reports` mode uses `/etc/codi-browser/report-admins.json`
+and `/var/lib/codi-browser-reports/reports.sqlite3`. Omit this option to keep
+the endpoints and storage disabled. Site-wide server access auditing is a
+separate setting and remains disabled by default.
