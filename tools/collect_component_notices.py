@@ -27,7 +27,7 @@ AA_STROKE_HEADERS=(
      'a01a730551b4b6be78cbc10fe404c9c7f0c2fc46884accfb212f3232d3dc47b7', 'block'),
 )
 
-def collect(repo):
+def collect(repo,wpf_license):
     def git(*args):return subprocess.check_output(['git','-C',str(repo),*args])
     if git('rev-parse','HEAD').decode().strip()!=COMMIT:raise ValueError('Unexpected Firefox revision')
     output=b''.join(('\n===== Firefox source: '+path+' =====\n').encode()+git('show','HEAD:'+path)+b'\n' for path in PATHS)
@@ -42,9 +42,12 @@ def collect(repo):
             if not separator or b'Copyright 2012 VMware, Inc.' not in header:raise ValueError('Unexpected VMware notice')
             header+=separator
         output+=('\n===== Firefox source notice: '+path+' =====\n').encode()+header+b'\n'
+    license_text=wpf_license.read_bytes()
+    if hashlib.sha256(license_text).hexdigest()!='ae48df11a335dc1a615f4f938b69cba73bcf4485c4f97af49b38efb0f216353b':raise ValueError('Unexpected WPF license')
+    output+=b'\n===== .NET WPF LICENSE.TXT, revision 3993645a2957293053ec8090eff1fd472a07cd65 =====\n'+license_text+b'\n'
     return output
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--firefox',type=Path,required=True);parser.add_argument('--output',type=Path,required=True);args=parser.parse_args()
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--firefox',type=Path,required=True);parser.add_argument('--wpf-license',type=Path,required=True);parser.add_argument('--output',type=Path,required=True);args=parser.parse_args()
     if args.output.exists() or args.output.is_symlink():parser.error('Output must not exist')
-    args.output.write_bytes(collect(args.firefox))
+    args.output.write_bytes(collect(args.firefox,args.wpf_license))

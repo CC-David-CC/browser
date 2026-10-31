@@ -539,9 +539,9 @@ The pinned `aa-stroke` Rust package has ordinary modules `bezierflattener.rs`
 and `tri_rasterize.rs` with attribution notices embedded in their source,
 not in separate license files. The compiled-component notice collector checks
 both full source-file hashes at the pinned Firefox revision and includes their
-original headers. The former refers to an MIT license in its upstream project;
-identification of that original project and its accompanying license text is
-still under review. The triangle-rasterization header includes its own terms.
+original headers. The former closely matches the .NET WPF CBezierFlattener implementation;
+the MIT license from WPF revision `3993645a2957293053ec8090eff1fd472a07cd65`
+is also included. The exact original revision used for the port is unverified. The triangle-rasterization header includes its own terms.
 The full pinned Firefox source remains available from the signed-in source
 page. The final-link symbol match identifies the package, but does not by
 itself prove which functions from each module survived optimization.
