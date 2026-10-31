@@ -43,6 +43,10 @@ the current tracked Browser app. It was downloaded from the public route
 and hash-verified after publication. The older relay snapshot at commit
 `05e70e3b0` remains available, SHA-256
 `6031d72c1c102de2260a634e9e1b8b559f8cccf292b6512e9270e348f2df5ef9`.
+The current desktop candidate has newer Browser source snapshot
+`codi-browser-source-0488c275e.tar.zst`, SHA-256
+`841993d069a9d824942224b2e34012a1dc56ce6c24f3407b920adaa4f2d7e0cd`;
+its public download was also hash-verified. The candidate is not yet live.
 The engine's built output and generated archives do not belong in Git.
 
 The notice page provides the generated Gecko license inventory, Emscripten
