@@ -35,6 +35,7 @@ SOURCES={
  'codi-browser-source-1f6f3c159.tar.zst':'e9dd5610d383abc8619c989b69dd3e0b470c1f403bbc5f3455fd97b4608c8fb9',
  'codi-browser-source-9fe78a273.tar.zst':'eb1405b13bc172920170259ee87e59594b977ea2498fa3daa08ec705b2fa627f',
  'codi-browser-source-3a82d4665.tar.zst':'e908debde58ac8280f4768593c73ba7099bf6bde3ca9365017a4b83aa2e1db39',
+ 'codi-browser-source-ed78ff4b3.tar.zst':'0b6f94ae5573bb80d430085cdad66bb3720fdb63d8e5883166412f5219b34139',
  'codi-relay-source-05e70e3b0.tar.zst':'6031d72c1c102de2260a634e9e1b8b559f8cccf292b6512e9270e348f2df5ef9',
 }
 FIREFOX_LICENSE_SHA='e84624c9655b7d4d28a35e1539fdba8420b141ed4d12c791ab7a53e996a84701'
@@ -80,7 +81,7 @@ def prepare(firefox_license,emscripten,wisp,adapter_license,liberation_license,c
     raw=Path(firefox_license).read_text(encoding='utf-8')
     # Retain the license text; make Firefox-internal links usable as a normal
     # same-origin webpage and remove Firefox-only stylesheet references.
-    page=raw.replace('href="about:license#','href="#').replace('href="about:buildconfig"','href="/browser-sources/"')
+    page=raw.replace('href="about:license#','href="#').replace('href="about:buildconfig"','href="./"')
     page='\n'.join(line for line in page.split('\n') if 'href="chrome://global/skin/' not in line)
     ems=[]
     for name in EMS_LICENSES:

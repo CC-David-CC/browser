@@ -311,3 +311,13 @@ SHA-256 `e9dd5610d383abc8619c989b69dd3e0b470c1f403bbc5f3455fd97b4608c8fb9`.
 The slow-download and close-cancellation update is represented by
 `https://ksu.codes/browser-sources/codi-browser-source-9fe78a273.tar.zst`,
 SHA-256 `eb1405b13bc172920170259ee87e59594b977ea2498fa3daa08ec705b2fa627f`.
+# Current access
+
+The former public `/browser-sources/` URLs below are historical. Sign in,
+open Browser and select **Licenses & source** to reach the current index and
+its downloads through the authenticated Browser session. The current source
+snapshot for the authenticated access change is
+`codi-browser-source-ed78ff4b3.tar.zst`, SHA-256
+`0b6f94ae5573bb80d430085cdad66bb3720fdb63d8e5883166412f5219b34139`.
+Access lasts while that Browser session remains authorized.
+
