@@ -11,7 +11,11 @@ PATHS=('third_party/abseil-cpp/LICENSE','third_party/dav1d/COPYING',
        'media/libnestegg/LICENSE','media/libpng/LICENSE','media/libspeex_resampler/COPYING',
        'media/libwebp/COPYING','media/libyuv/LICENSE','media/libcubeb/LICENSE',
        'third_party/content_analysis_sdk/LICENSE',
-       'third_party/rust/seahash/Cargo.toml.orig')
+       'third_party/rust/seahash/Cargo.toml.orig',
+       'third_party/rust/app_units/Cargo.toml.orig',
+       'third_party/rust/core_maths/Cargo.toml.orig',
+       'third_party/rust/debug_tree/Cargo.toml.orig',
+       'third_party/rust/void/Cargo.toml')
 
 def collect(repo):
     def git(*args):return subprocess.check_output(['git','-C',str(repo),*args])
