@@ -35,3 +35,15 @@ an operator-created request, then verified the submitted signed report and
 its unchanged summary after a relay restart. The test request and account
 were removed. The test created the request through the coordinator as its
 service user, so it did not independently test an administrator's UI login.
+
+A subsequent live desktop test exercised the administrator UI itself using a
+registered disposable account. After the device recorded example.com locally,
+the test used **Request reports for one hour** and **Show totals**, and saw
+its signed device report in the UI. It removed that account's test requests
+and reports, restored the exact pre-test administrator list, and removed the
+account. The guarded test temporarily restarts the relay and is implemented in
+`tests/browser-live-report-admin.test.mjs` and
+`tests/live-browser-report-admin-guard.py`; the latter leaves a root-only
+journal for explicit recovery if interrupted. The first attempt demonstrated
+that systemd `active` can precede socket readiness and received a transient 502;
+the guard now waits until the actual relay socket accepts a connection.
