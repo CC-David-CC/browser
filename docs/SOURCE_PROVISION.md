@@ -295,3 +295,7 @@ SHA-256 `574d6652461794e99cb746e90da5c50b168283e5e12b6cf2ab27f5851a9cb999`.
 The live relay's oversized-download error update is represented by
 `https://ksu.codes/browser-sources/codi-browser-source-1f6f3c159.tar.zst`,
 SHA-256 `e9dd5610d383abc8619c989b69dd3e0b470c1f403bbc5f3455fd97b4608c8fb9`.
+
+The slow-download and close-cancellation update is represented by
+`https://ksu.codes/browser-sources/codi-browser-source-9fe78a273.tar.zst`,
+SHA-256 `eb1405b13bc172920170259ee87e59594b977ea2498fa3daa08ec705b2fa627f`.
