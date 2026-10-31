@@ -162,6 +162,10 @@ The source for the staged audit-capable relay runtime is published at
 SHA-256 `3e090e5a9508f0ff53aae97791ff21c71dc38afb5d84bc9cc2cc54f304aeb42c`.
 Publishing source does not by itself enable server recording.
 
+The Browser frontend memory-growth fix is represented by
+`https://ksu.codes/browser-sources/codi-browser-source-ee1704dcd.tar.zst`,
+SHA-256 `0ef62be5518d9cbd01543efd9bacafc22238ac6b4ca7a00719898753cfbab60a`.
+
 The built `libxul_so.list` includes `config/external/rlbox/rlbox_thread_locals.o`,
 whose source includes RLBox headers. Firefox's generated license page names
 `third_party/rlbox`, but the separately bundled notices did not reproduce its
