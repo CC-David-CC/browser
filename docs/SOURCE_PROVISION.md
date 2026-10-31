@@ -169,3 +169,22 @@ Recreate the extra input from the pinned checkout with
 `git show 2e1e835a5da5907e5ceef19aade58a7493f1e34d:third_party/rlbox/LICENSE`,
 and supply it to `prepare_notices.py --rlbox-license`. This addresses the
 identified attribution gap; it does not establish a complete final-link audit.
+
+A further pass over all 1,860 entries grouped object paths beyond `media/` and
+`third_party/`: the list includes ANGLE, Skia, Cairo, FreeType, protobuf,
+Brotli, Expat, Graphite, HarfBuzz, WOFF2, Snappy, Chromium and jsoncpp.
+`tools/collect_graphics_notices.py` collects the corresponding license files
+from the exact pinned Firefox checkout; its output SHA-256 is
+`a447f4de3c0b4b60c6bf707811d89a9f8a5ec0e7297eb0e82573ea196b06196e`.
+Cairo's upstream file describes LGPL 2.1 or MPL 1.1 choices; both included
+license texts and the full pinned Firefox source remain available. FreeType's
+pinned `moz.yaml` names release `VER-2-14-2` and the FreeType License; Firefox
+omits the upstream `docs/` directory. The exact release's `docs/FTL.TXT`,
+SHA-256 `5a5ee54c5001bbad1cdc1a57cc3dd4c42199b2da09d39c7ee41fab002d02967f`,
+is included along with the license information in Firefox's source. The
+FreeType 2.14.2 attribution appears on the public source and notice page.
+The expanded combined notice has SHA-256
+`35258b272eca7cb0f23e53c847733c536197ee3ce8884b66d693b425433b6d1a`.
+To rebuild, supply the collected output as `--graphics-notices` and the
+release's FTL text as `--freetype-license` to `prepare_notices.py`. This is
+additional object-group evidence, not a complete object-level legal audit.
