@@ -157,6 +157,11 @@ modules and Browser adapter in
 SHA-256 `f231dfee54279c20c6bca77988b556d6fcad7c8886792eb78c63e1f9c10b680b`.
 The pinned upstream Firefox source archive and earlier notices remain linked.
 
+The source for the staged audit-capable relay runtime is published at
+`https://ksu.codes/browser-sources/codi-browser-source-f4a43b30e.tar.zst`,
+SHA-256 `3e090e5a9508f0ff53aae97791ff21c71dc38afb5d84bc9cc2cc54f304aeb42c`.
+Publishing source does not by itself enable server recording.
+
 The built `libxul_so.list` includes `config/external/rlbox/rlbox_thread_locals.o`,
 whose source includes RLBox headers. Firefox's generated license page names
 `third_party/rlbox`, but the separately bundled notices did not reproduce its
