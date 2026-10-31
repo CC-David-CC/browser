@@ -4,6 +4,12 @@ On box-webhost, `sudo codi-browser-policy` edits the root-owned policy files
 with a lock, validates each result against the running relay's pinned policy
 code, and replaces the file atomically. Changes apply to new connections;
 outbound blocks also stop an active Browser stream when traffic next flows.
+The relay rechecks current rules after DNS and while a Wisp connection is
+being established. An already-issued TCP connection attempt cannot be undone;
+a newly blocked connection is closed before Wisp payload is forwarded. For
+explicit URL downloads, a rule change after the HTTP request has already been
+sent cannot retract that request; the response is checked before processing
+and while streaming.
 The operator is pinned to the current relay's validation code. When upgrading
 that relay, review and update the operator pin if its policy schema changes.
 
