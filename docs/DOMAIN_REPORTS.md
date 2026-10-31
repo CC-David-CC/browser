@@ -1,7 +1,7 @@
 # Requested domain-usage reports
 
-This feature is in local development and is not enabled on the live service.
-The Browser records domain names and timestamps in account-scoped storage on
+The feature is enabled on the live Simplified Browser service. The Browser
+records domain names and timestamps in account-scoped storage on
 the current device. It does not record page paths or page contents. Existing
 browser data can be cleared by the device owner. No report is sent unless a
 configured administrator creates a time-limited request while the Browser is
@@ -28,3 +28,10 @@ renderer's optional `--reports` mode uses `/etc/codi-browser/report-admins.json`
 and `/var/lib/codi-browser-reports/reports.sqlite3`. Omit this option to keep
 the endpoints and storage disabled. Site-wide server access auditing is a
 separate setting and remains disabled by default.
+
+On 2026-10-31, a live disposable account generated a real Browser request to
+example.com. The test confirmed no report for that account was stored before
+an operator-created request, then verified the submitted signed report and
+its unchanged summary after a relay restart. The test request and account
+were removed. The test created the request through the coordinator as its
+service user, so it did not independently test an administrator's UI login.

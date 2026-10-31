@@ -115,16 +115,16 @@ integrated. Every redirect is checked against the relay destination policy.
 
 ## Domain usage records
 
-The Browser app is designed to record requested destination domains locally by
+The Browser app records requested destination domains locally by
 account when its relay is connected. Records contain a domain and device time,
 not page URLs, paths, messages or content. The device uses a non-exportable
 Web Crypto signing key and a hash chain; multiple tabs serialize updates with
 Web Locks. A separately saved head hash detects missing or changed records.
 Clearing the browser's site data removes the records and key. The private key
-never leaves the browser. A source-only request coordinator verifies reports against an authenticated
+never leaves the browser. The live coordinator verifies reports against an authenticated
 account and combines device reports without double-counting repeated snapshots.
-There is no request/report transport, production account binding, or administrator
-UI yet, so reports cannot currently be requested from live devices. A signature shows
+An administrator can request reports from Browser's Diagnostics section; see
+`docs/DOMAIN_REPORTS.md` for the live test and operating details. A signature shows
 that a particular key signed a report; it does not prove a person visited a
 site, that the device clock was accurate, or that a user-controlled client
 reported every request.
