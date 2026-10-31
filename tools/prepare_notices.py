@@ -30,6 +30,7 @@ SOURCES={
  'codi-browser-source-ee1704dcd.tar.zst':'0ef62be5518d9cbd01543efd9bacafc22238ac6b4ca7a00719898753cfbab60a',
  'codi-browser-source-f70a64aa3.tar.zst':'1772fa4cc0e5ec205a163b9e6467ba18ffabf782e6c3a38f62316e9ad84f520d',
  'codi-browser-source-808fac040.tar.zst':'8a5d4ee98efd14272379a54665dce2c3a21fd92aff4871281ab2ff674b4a4249',
+ 'codi-browser-source-1573b1ffc.tar.zst':'4f376d5619d916adf902c7818bc2f8a577c2849a830db27790aa045d00f3f4a5',
  'codi-relay-source-05e70e3b0.tar.zst':'6031d72c1c102de2260a634e9e1b8b559f8cccf292b6512e9270e348f2df5ef9',
 }
 FIREFOX_LICENSE_SHA='e84624c9655b7d4d28a35e1539fdba8420b141ed4d12c791ab7a53e996a84701'

@@ -283,3 +283,7 @@ inputs produced the same combined notice now served publicly, SHA-256
 `fbca71d13f022e85945e762d7cb5a9d9939ac7b25cbf803b0b1a24759b5d8329`.
 This addresses the identified non-GitHub license files, not the remaining
 unresolved dependencies or full final-link inventory.
+
+The HTML import update's Browser source is available and indexed at
+`https://ksu.codes/browser-sources/codi-browser-source-1573b1ffc.tar.zst`,
+SHA-256 `4f376d5619d916adf902c7818bc2f8a577c2849a830db27790aa045d00f3f4a5`.
