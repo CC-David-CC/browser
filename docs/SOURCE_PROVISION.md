@@ -291,3 +291,7 @@ SHA-256 `4f376d5619d916adf902c7818bc2f8a577c2849a830db27790aa045d00f3f4a5`.
 The Browser download-buffer update's source is available and indexed at
 `https://ksu.codes/browser-sources/codi-browser-source-b6b5d43e2.tar.zst`,
 SHA-256 `574d6652461794e99cb746e90da5c50b168283e5e12b6cf2ab27f5851a9cb999`.
+
+The live relay's oversized-download error update is represented by
+`https://ksu.codes/browser-sources/codi-browser-source-1f6f3c159.tar.zst`,
+SHA-256 `e9dd5610d383abc8619c989b69dd3e0b470c1f403bbc5f3455fd97b4608c8fb9`.
