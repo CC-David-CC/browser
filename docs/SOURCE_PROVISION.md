@@ -382,3 +382,12 @@ source page, and its complete downloaded hash was verified with a disposable
 registered account. The ABI v2 Browser bundle and engine are live as release
 `8d5fe713698d4bb94781b10ef22c4815e48b1d046237730e23259945d2332f05`.
 The final-link inventory and license review limitations noted above remain.
+
+The live ABI v3 navigation-feedback engine is represented by
+`codi-browser-source-ac6ea5798-v3.tar.zst`, SHA-256
+`318ef4997e96e9f862ecf53bfa9c61e8c7dac2fb507fc71004bf36dd23c86d92`,
+on the signed-in source page. It contains the Browser source, native patch,
+added native file and build driver, supplementing the pinned base archives.
+The registered live test downloaded and verified the archive. The engine WASM
+is SHA-256 `4da6079da4a9bf6d1d48701895935bb97f3cfc197db38a771f693705c6d64ba3`.
+The unresolved license and final-link inventory limitations remain.
