@@ -47,6 +47,10 @@ The current desktop candidate has newer Browser source snapshot
 `codi-browser-source-0488c275e.tar.zst`, SHA-256
 `841993d069a9d824942224b2e34012a1dc56ce6c24f3407b920adaa4f2d7e0cd`;
 its public download was also hash-verified. The candidate is not yet live.
+The current relay and newer desktop candidate are represented by
+`codi-browser-source-802621ec2.tar.zst`, SHA-256
+`128c33ee16a6dde95f5c594b19ef6c8a05cb9b251024e95ac859f888b3a26c90`,
+which was independently fetched and checked from the public source page.
 The engine's built output and generated archives do not belong in Git.
 
 The notice page provides the generated Gecko license inventory, Emscripten
