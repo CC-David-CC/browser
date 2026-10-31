@@ -1,4 +1,22 @@
-# Test status — source handoff 0.1.0
+# Browser test status
+
+As of the live Simplified test on 2026-10-31, the Browser app and its Gecko
+engine are deployed at ksu.codes. Registered-account tests have exercised
+network admission, blocked destinations, saved downloads, browser/server file
+sync, re-sign-in, rule changes, and recovery. Desktop and phone-sized Chrome
+layouts have been tested; the latter is emulation rather than a physical phone.
+See `SIMPLIFIED_HANDOFF.md` for specific live releases, evidence and limitations.
+
+A fresh desktop live-site check rendered example.com and the McMaster-Carr
+catalog. Grainger displayed its own “Access is temporarily restricted” page.
+The reason for that external restriction is not established. These observations
+do not guarantee compatibility with other sites or future changes to these
+sites. The engine's complete linked-component licensing review remains open.
+
+## Historical source handoff 0.1.0
+
+The following report describes the earlier source-only handoff and is retained
+for historical context; it does not describe the currently deployed system.
 
 Recorded: 2026-10-30.
 
