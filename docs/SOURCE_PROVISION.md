@@ -150,3 +150,9 @@ The source archive corresponding to the deployed file-mirror update is
 SHA-256 `e3d823eeb3d042ca051f7b12c2c775a945660036c7ec3ca55bd07588e32bf968`.
 It is linked from the public source index; this update does not resolve the
 remaining audit limitations described above.
+
+The clicked-download release additionally distributes its modified Mozilla
+modules and Browser adapter in
+`https://ksu.codes/browser-sources/codi-browser-source-29a71d717.tar.zst`,
+SHA-256 `f231dfee54279c20c6bca77988b556d6fcad7c8886792eb78c63e1f9c10b680b`.
+The pinned upstream Firefox source archive and earlier notices remain linked.

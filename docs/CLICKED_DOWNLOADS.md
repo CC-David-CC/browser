@@ -1,6 +1,6 @@
 # Clicked downloads
 
-The development Browser runs each clicked download inside its ephemeral Gecko
+Browser runs each clicked download inside its ephemeral Gecko
 profile, using that profile's cookies and the authenticated relay. A completed
 download appears in the Browser window. It is copied to the account's My files
 only when the user chooses **Save to My files** and a name. The normal browser

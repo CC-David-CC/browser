@@ -108,7 +108,7 @@ files as well as upload a local HTML file. It copies the selected document to
 the temporary guest profile; sibling files and persistent browser profiles are
 not implemented yet. The live relay also supports an explicit Download
 URL action into My files, limited to 128 MiB. That independent fetch does not
-include Gecko cookies. In the development version, downloads clicked inside
+include Gecko cookies. Downloads clicked inside
 Gecko use its own session and appear in a temporary queue; choose Save to My
 files to keep one. See `docs/CLICKED_DOWNLOADS.md` for limits and testing.
 Every redirect is checked against the relay destination policy.
