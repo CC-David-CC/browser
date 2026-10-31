@@ -237,3 +237,10 @@ the exact Ubuntu packages and verifies both package and extracted font hashes.
 These assets add approximately 19 MiB to the first Browser app load and are
 cached normally. The CJK collection supports several regional faces; it is not
 a promise of font coverage for every writing system.
+
+The language-font release's Browser integration source is published at
+`https://ksu.codes/browser-sources/codi-browser-source-f70a64aa3.tar.zst`,
+SHA-256 `1772fa4cc0e5ec205a163b9e6467ba18ffabf782e6c3a38f62316e9ad84f520d`.
+The archive is listed on the public source index. The exact font assets and
+notices ship with the Browser bundle; the archive contains the reproducible
+font staging instructions and SHA-256 pins, not generated font binaries.
