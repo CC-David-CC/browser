@@ -28,7 +28,7 @@ export function mount(host) {
   }
   const go=make('button','','Go');go.type='submit';go.disabled=true;
   form.append(address,go);toolbar.insertBefore(form,buttons.home);
-  const licenses=make('a','','Licenses & source');licenses.href='/browser-sources/';licenses.target='_blank';licenses.rel='noopener noreferrer';toolbar.append(licenses);
+  const licenses=make('a','','Licenses & source');licenses.target='_blank';licenses.rel='noopener noreferrer';licenses.setAttribute('aria-disabled','true');toolbar.append(licenses);
   const warning=make('div','warn','Experimental browser · temporary profile · audio is not available yet');
   const stage=make('div','stage'),canvas=make('canvas'),info=make('div','info');
   canvas.width=config.width;canvas.height=config.height;canvas.tabIndex=0;canvas.setAttribute('aria-label','Independent browser viewport');
@@ -94,7 +94,7 @@ export function mount(host) {
   }
   async function start(){
     if(disposed)return;const g=++generation;
-    clearTimeout(reportTimer);reportPanel?.remove();reportPanel=null;runAbort?.abort();instance?.dispose();relay?.close();relay=null;downloads.replaceChildren();downloadRows.clear();markDownloadState();setControls(false);info.hidden=false;
+    clearTimeout(reportTimer);reportPanel?.remove();reportPanel=null;runAbort?.abort();instance?.dispose();relay?.close();relay=null;licenses.removeAttribute('href');licenses.setAttribute('aria-disabled','true');downloads.replaceChildren();downloadRows.clear();markDownloadState();setControls(false);info.hidden=false;
     info.textContent='Starting browser…';
     if(!globalThis.crossOriginIsolated||typeof SharedArrayBuffer==='undefined') {
       info.textContent='The browser could not start because this page is missing required isolation. Please contact the site administrator.';return;
@@ -104,7 +104,7 @@ export function mount(host) {
       if(host.browserRelay?.available()){
         const opened=await host.browserRelay.open({onFailure:error=>{if(generation===g&&!disposed){setStatus('Browser network disconnected: '+textError(error));instance?.dispose();setControls(false);info.hidden=false;info.textContent='Network connection ended. Use Reset engine to reconnect.';}}});
         if(disposed||generation!==g){opened.close();return;}
-        relay=opened;void sendRequestedReports(opened,g);void prepareReportAdmin(opened,g);
+        relay=opened;if(opened.sourceURL){licenses.href=opened.sourceURL;licenses.removeAttribute('aria-disabled');}void sendRequestedReports(opened,g);void prepareReportAdmin(opened,g);
       }
       endpoint=relayURL(relay?.url??config.wispURL,doc.location.href);
     }catch(e){report(e);info.textContent=textError(e);return;}
