@@ -462,3 +462,8 @@ The staged `libxul.stripped.so` and corresponding Gecko build output match
 SHA-256 `e600c6226797fb32a7ec1501de5e541a78aed7540bb3fa2a04ea9ebb854e185b`.
 This is evidence about retained build inputs, not a reproducible final-link
 map or a legal determination.
+
+Updated Browser and network-policy documentation is included in the signed-in
+source snapshot `codi-browser-source-f15af44a6.tar.zst`, SHA-256
+`27e670c3bdae08bfe550ca6d732fc483e22d5ca50704f3d18b26ec7f02b01d27`.
+The complete archive was verified through a registered live session.
