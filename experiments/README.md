@@ -138,3 +138,27 @@ STAGED_ENGINE --out NEW_DIRECTORY`. Set `CODI_EXPERIMENT_APP` to that output
 and run the fixture, then run the diagnostic test with Puppeteer and a local
 Chrome debugging endpoint on port 19255. The preparation script adds
 instrumentation only to the copied worker and verifies its source anchors.
+
+## Software scroll candidate — 2026-10-31
+
+A controlled live phone-emulation test showed a 210px touch drag delivered as
+six moves scrolling about 91–97px, while a single 210px move scrolled 210px.
+The outer canvas received all six move events. The upstream software fallback
+starts a fresh smooth scroll from the current position for each wheel event.
+An isolated v3 engine build changed that fallback to `ScrollMode::Instant`;
+the APZ branch and the check respecting `preventDefault()` were unchanged.
+In local real-engine phone-emulation tests, both six-step horizontal and
+vertical gestures scrolled 210px, as did a one-step horizontal gesture. This
+is not a physical-phone test, a complete custom-scroll-widget regression, or a
+live deployment. Candidate WASM SHA-256:
+`4efd895c3ec20729ee738ab942e6fbc2fc798ced2f28b7d37b116668540758be`.
+`tools/patch_engine.py` applies the change only to its pinned upstream anchor.
+The initial isolated fixture used an old v1 manifest and refused to start;
+the manifest was corrected to v3 to match the candidate native ABI. An initial
+check command also missed the Python environment and failed to import aiohttp;
+using the existing project environment passed 89 JavaScript and 42 Python tests.
+The original build script copied its three inputs through staging symlinks; the
+retained libxul SHA-256 still matched the previously recorded
+`e600c6226797fb32a7ec1501de5e541a78aed7540bb3fa2a04ea9ebb854e185b`, and all
+three copied files matched their dist inputs afterward. Use independent copies
+or a guarded build driver for any future reproduction.

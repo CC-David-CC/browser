@@ -10,8 +10,11 @@ def files():
     return {'gecko.js/src/embed-xul.h':'// header\n',
             'gecko.js/src/embed-xul.cpp':'        case 9:  // set clipboard text\nif (g_cmd->op >= 5 && g_cmd->op <= 8) {\n',
             'gecko.js/src/embed-browser.cpp':'  if (g_isChrome) {\n    // browser.xhtml is already loading\n  uint32_t spins = 0;\n  SpinEventLoopUntil("xul_load"_ns, [&]() -> bool {\n    PresShell* p = ds->GetPresShell();\n  printf("xul_load: spun %u, ready\\n", spins);\n  fflush(stdout);\n\n  // Make our content window',
+            'gecko.js/src/embed-input.cpp':'CSSPoint::FromAppUnits(before) + CSSPoint((float)dx, (float)dy),\n        ScrollMode::Smooth);',
             'gecko.js/build-lib.sh':'for src in embed-xul embed-init embed-browser embed-paint embed-input embed-mirror; do\n-sEXPORTED_FUNCTIONS=_main,\n-sEXPORTED_RUNTIME_METHODS=ccall,\n-sOFFSCREENCANVASES_TO_PTHREAD=#gldummy\n'}
 class PatchTests(unittest.TestCase):
+    def test_software_scroll_is_immediate(self):
+        f=files();self.assertIn('ScrollMode::Instant',patch.transformed(f,'native')['gecko.js/src/embed-input.cpp']);f['gecko.js/src/embed-input.cpp']='changed';self.assertRaises(RuntimeError,patch.transformed,f,'native')
     def test_navigation_patch(self):
         out=patch.transformed(files(),'native');self.assertIn('case 10:',out['gecko.js/src/embed-xul.cpp']);self.assertIn('|| g_cmd->op == 10',out['gecko.js/src/embed-xul.cpp'])
     def test_lifetime_and_abi_exports(self):

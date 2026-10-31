@@ -43,6 +43,12 @@ def transformed(files,source):
         '  printf("xul_load: spun %u, ready\\n", spins);\n  fflush(stdout);\n  if (canceled) return true;\n\n  // Make our content window',
         'navigation cancellation exit')
     result[path]=s
+    path='gecko.js/src/embed-input.cpp';s=result[path]
+    s=replace_once(s,
+        'CSSPoint::FromAppUnits(before) + CSSPoint((float)dx, (float)dy),\n        ScrollMode::Smooth);',
+        'CSSPoint::FromAppUnits(before) + CSSPoint((float)dx, (float)dy),\n        ScrollMode::Instant);',
+        'software wheel scroll mode')
+    result[path]=s
     path='gecko.js/build-lib.sh';s=result[path]
     s=replace_once(s,'for src in embed-xul embed-init embed-browser embed-paint embed-input embed-mirror; do',
         'for src in embed-xul embed-init embed-browser embed-paint embed-input embed-mirror embed-host; do','embed object list')
@@ -67,7 +73,7 @@ def main():
             if not (repo/name).is_file() or sha((repo/name).read_text())!=digest:raise RuntimeError('Patched source changed: '+name)
         if record['localNativeSHA256']!=sha((ROOT/'native/embed-host.cpp').read_text()):raise RuntimeError('Handoff native code changed; review and repatch a clean checkout.')
         print('Exact patch already present.');return
-    names=['gecko.js/src/embed-xul.h','gecko.js/src/embed-xul.cpp','gecko.js/src/embed-browser.cpp','gecko.js/build-lib.sh']
+    names=['gecko.js/src/embed-xul.h','gecko.js/src/embed-xul.cpp','gecko.js/src/embed-browser.cpp','gecko.js/src/embed-input.cpp','gecko.js/build-lib.sh']
     # Never overwrite an integrator's modifications to these files.
     for name in names:
         original=subprocess.check_output(['git','-C',str(repo),'show',f'HEAD:{name}']).decode()
