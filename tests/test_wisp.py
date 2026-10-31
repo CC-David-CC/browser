@@ -208,4 +208,21 @@ class WispRelayTests(unittest.IsolatedAsyncioTestCase):
             await ws.send_bytes(self.pkt(2,2,b'after'))
             self.assertEqual(await self.read(ws),((4,2),b'\x48'))
 
+    async def test_explicit_audit_records_stream_metadata_without_payload(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'policy.json';value=json.loads(self.relay.policy_path.read_text());value['serverAuditEnabled']=True;path.write_text(json.dumps(value));events=[]
+            self.relay=Relay(policy_path=path,origin='http://127.0.0.1',authenticate=self.relay.authenticate,source=self.relay.source,
+                             network_check=lambda ip:None,audit=events.append,resolver=self.relay.resolver,connector=self.relay.connector)
+            app=web.Application();app.router.add_get('/wisp/',self.relay.handle);runner=web.AppRunner(app);await runner.setup();site=web.TCPSite(runner,'127.0.0.1',0);await site.start()
+            try:
+                url=f'http://127.0.0.1:{site._server.sockets[0].getsockname()[1]}/wisp/'
+                async with self.client.ws_connect(url,headers={'Origin':'http://127.0.0.1','X-Test-Auth':'registered'}) as ws:
+                    await self.read(ws);await ws.send_bytes(self.pkt(1,2,bytes([1])+struct.pack('<H',443)+b'grainger.com'));await ws.send_bytes(self.pkt(2,2,b'private-test-content'))
+                    self.assertIn(((2,2),b'private-test-content'),[await self.read(ws),await self.read(ws)])
+                    await ws.send_bytes(self.pkt(4,2,b'\x01'));await self.read(ws)
+                self.assertEqual([e['event'] for e in events],['opened','closed'])
+                self.assertEqual(events[0]['destination'],'grainger.com');self.assertEqual(events[1]['sentBytes'],len(b'private-test-content'))
+                self.assertNotIn('private-test-content',json.dumps(events))
+            finally:await runner.cleanup()
+
 if __name__=='__main__':unittest.main()
