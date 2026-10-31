@@ -6,8 +6,12 @@ download appears in the Browser window. It is copied to the account's My files
 only when the user chooses **Save to My files** and a name. The normal browser
 mirror then synchronizes it to the server; an interrupted sync may need to
 finish later. Discard removes the temporary copy. Resetting or closing the
-window warns if downloads are still pending. Browser reload/close warnings are
-subject to the outer browser's own behavior.
+window warns if downloads are still pending. The filename prompt, replacement
+confirmation, and reset confirmation use the desktop's themed dialogs. Before
+replacing an existing file, Browser checks its version again after confirmation;
+if it changed or disappeared while the dialog was open, the download is not
+written over it. Closing the Browser app cancels any open save dialog. Browser
+reload/close warnings are subject to the outer browser's own behavior.
 
 Each window has a separate queue and a limit of three active or waiting files,
 up to 128 MiB each. Oversized and interrupted transfers report an error. These
@@ -42,3 +46,9 @@ maps a synthetic public hostname to loopback. Never deploy that override.
 cookie-protected delayed files, explicit save, account synchronization,
 failure/size limits, and independent window cleanup. Phone-sized automated
 tests emulate touch; they do not substitute for a physical phone test.
+
+`tests/browser-download-folder.test.mjs` covers the desktop dialog workflow
+against an isolated local account: offline HTML upload, clicked download, save
+and sync, cancellation, replacement, concurrent-write protection, and reset.
+It runs at desktop, phone-sized, and 4K viewport sizes and asserts that the
+workflow does not open a browser-native popup.

@@ -148,7 +148,7 @@ export function mount(host) {
             save.disabled=true;discard.disabled=true;
             try{
               if(keep){
-                const target=await chooseDownloadTarget({storage:host.storage,prompt:(...args)=>doc.defaultView.prompt(...args),confirm:(...args)=>doc.defaultView.confirm(...args),current:()=>current(s,g),signal:host.signal,suggested:m.name});if(!target)return;
+                const target=await chooseDownloadTarget({storage:host.storage,prompt:host.ui.prompt,confirm:host.ui.confirm,current:()=>current(s,g),signal:lifetime.signal,suggested:m.name});if(!target)return;
                 const result=await s.request('download-read',{id:m.id});
                 if(!current(s,g)||!target.context.valid())return;
                 await target.context.files.write(target.path,result.data,target.expected);if(!current(s,g)||!target.context.valid())return;
@@ -206,7 +206,16 @@ export function mount(host) {
   for(const name of ['back','forward','reload','stop'])buttons[name].addEventListener('click',()=>void operation('control',{action:name}),{signal:lifetime.signal});
   buttons.home.addEventListener('click',()=>void operation('open-html',{html:HOME_HTML}),{signal:lifetime.signal});
   buttons.keyboard.addEventListener('click',()=>{host.ui.enableKeyboard?.();keyboard.inputMode='text';keyboard.focus({preventScroll:true});},{signal:lifetime.signal});
-  buttons.reset.addEventListener('click',()=>{if(downloads.childElementCount&&!doc.defaultView.confirm('Discard downloads that have not been saved?'))return;void start();},{signal:lifetime.signal});
+  buttons.reset.addEventListener('click',async()=>{
+    const g=generation;
+    if(downloads.childElementCount){
+      const discard=await host.ui.confirm('Resetting the browser clears downloads that have not been saved to My files.',{
+        title:'Discard temporary downloads?',confirmLabel:'Reset browser',cancelLabel:'Keep browser open',danger:true,signal:lifetime.signal,
+      });
+      if(!discard||disposed||generation!==g)return;
+    }
+    if(!disposed&&generation===g)void start();
+  },{signal:lifetime.signal});
   buttons.open.addEventListener('click',()=>picker.click(),{signal:lifetime.signal});
   buttons.download.addEventListener('click',async()=>{
     const s=instance,g=generation,connection=relay;
@@ -216,7 +225,7 @@ export function mount(host) {
       if(!['http:','https:'].includes(parsed.protocol))throw Error('Enter an HTTP or HTTPS download URL.');
       let suggested=decodeURIComponent(parsed.pathname.split('/').pop()||'download').replace(/[\/\\\u0000-\u001f\u007f]/g,'_');
       if(!suggested||suggested==='.'||suggested==='..')suggested='download';
-      const target=await chooseDownloadTarget({storage:host.storage,prompt:(...args)=>doc.defaultView.prompt(...args),confirm:(...args)=>doc.defaultView.confirm(...args),current:()=>current(s,g),signal:host.signal,suggested:suggested.slice(0,120)});if(!target)return;
+      const target=await chooseDownloadTarget({storage:host.storage,prompt:host.ui.prompt,confirm:host.ui.confirm,current:()=>current(s,g),signal:lifetime.signal,suggested:suggested.slice(0,120)});if(!target)return;
       const context=target.context;setStatus('Downloading…');
       if(usageOwner&&host.storage.signedInSubject?.()===usageOwner)void recordDomain(usageOwner,parsed.hostname).catch(error=>log(textError(error)));
       const result=await connection.download(url);if(!current(s,g)||!context.valid())return;

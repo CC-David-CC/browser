@@ -7,6 +7,20 @@ sync, re-sign-in, rule changes, and recovery. Desktop and phone-sized Chrome
 layouts have been tested; the latter is emulation rather than a physical phone.
 See `SIMPLIFIED_HANDOFF.md` for specific live releases, evidence and limitations.
 
+The live Applications menu now labels Browser “in development” and disables its
+launcher while higher-priority STEM apps are improved. The app source, engine,
+relay integration and already-open Browser windows remain in place. The save,
+replace and reset themed-dialog update below is local only and is not in the live
+Browser bundle.
+
+On 2026-10-31, the Browser app's save-name, replacement, and reset prompts were
+changed to the desktop's themed dialogs. An isolated real-engine workflow passed
+at 1366×900, emulated 412×915 phone size, and 3840×2160. It covered download to
+My files, cancellation, replacement, synchronization, stale-write protection,
+reset cancellation/acceptance, and the absence of browser-native dialogs. This
+source update has not yet been deployed to ksu.codes; physical-phone input was
+not tested.
+
 A fresh desktop live-site check rendered example.com and the McMaster-Carr
 catalog. Grainger displayed its own “Access is temporarily restricted” page.
 The reason for that external restriction is not established. These observations

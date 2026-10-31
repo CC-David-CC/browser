@@ -78,6 +78,13 @@ it on the desktop. The app asset manifest and builder limits support this
 engine; verify CSP and cross-origin isolation on the target desktop. The current live deployment starts the engine successfully.
 Review any future policy changes before applying them to the desktop.
 
+Clicked downloads and the explicit Download URL action use the host's themed
+filename prompt and replacement confirmation. Existing My files targets are
+version-checked again after confirmation; a concurrent edit is preserved and
+the save is stopped. Resetting the engine asks before discarding unsaved
+downloads. These actions are covered by the isolated local Browser workflow in
+`docs/CLICKED_DOWNLOADS.md`.
+
 Online browsing requires an authenticated Wisp relay with server-enforced
 destination and resource policies. The app's standalone `wispURL` defaults to
 `null`; on the live desktop, the host provides an authenticated per-session
