@@ -53,6 +53,13 @@ export class Mailbox {
     this.bytes.fill(0,this.pointer+offset,this.pointer+offset+capacity);
     this.bytes.set(b,this.pointer+offset);
   }
+  cancelLoad() {
+    if (!this.active || this.failed) return false;
+    const state=Atomics.load(this.words,this.pointer>>>2);
+    if ((state!==1 && state!==2) || Atomics.load(this.words,(this.pointer+OFF.op)>>>2)!==OP.load) return false;
+    Atomics.store(this.words,(this.pointer+OFF.evType)>>>2,0x43414e43);
+    return true;
+  }
   async command(c, width, height, signal) {
     if (this.active || this.failed) throw new Error('Mailbox is busy or failed. Reset this window.');
     if (!ALLOWED.has(c.op)) throw new Error('Disallowed engine opcode.');

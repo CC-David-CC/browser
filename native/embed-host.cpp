@@ -10,7 +10,7 @@ static_assert(offsetof(XulCmd, url) == 20, "ABI drift: url");
 static_assert(offsetof(XulCmd, op) == 8212, "ABI drift: op");
 static_assert(offsetof(XulCmd, cursor) == 8324, "ABI drift: cursor");
 static_assert(sizeof(XulCmd) == 8328, "ABI drift: size");
-extern "C" EMSCRIPTEN_KEEPALIVE int browser_embed_abi() { return 1; }
+extern "C" EMSCRIPTEN_KEEPALIVE int browser_embed_abi() { return 2; }
 
 // Escape UTF-8 JSON text without running page JavaScript for browser chrome.
 static std::string JsonText(const nsACString& text) {

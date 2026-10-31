@@ -10,6 +10,11 @@ test('ABI offsets match inspected wasm32 struct',()=>{assert.equal(OFF.op,8212);
 test('BGRA copied to RGBA, not shared with engine',async()=>{const {m,box}=fixture();const p=box.command({op:OP.paint},1,1);finish(m,new Uint8Array([10,20,30,0]));const r=await p;assert.deepEqual([...r.pixels],[30,20,10,255]);m.HEAPU8[result+2]=0;assert.equal(r.pixels[0],30);});
 test('native control result parsed',async()=>{const {m,box}=fixture();const p=box.command({op:OP.control},1,1);const status={url:'https://a.test/',canGoBack:false,canGoForward:true,ok:true};finish(m,new TextEncoder().encode(JSON.stringify(status)));assert.deepEqual((await p).status,status);});
 test('reject parallel mailbox command, allow later completed operation',async()=>{const {m,box}=fixture();const p=box.command({op:OP.paint},1,1);await assert.rejects(box.command({op:OP.paint},1,1),/busy/);finish(m,new Uint8Array(4));await p;const p2=box.command({op:OP.paint},1,1);finish(m,new Uint8Array(4));await p2;});
+test('cancellation signals only an active load and leaves other operations untouched',async()=>{
+ const {m,box}=fixture();assert.equal(box.cancelLoad(),false);
+ const paint=box.command({op:OP.paint},1,1);assert.equal(box.cancelLoad(),false);assert.equal(Atomics.load(m.HEAP32,(base+OFF.evType)/4),0);finish(m,new Uint8Array(4));await paint;
+ const load=box.command({op:OP.load,url:'https://example.com/'},1,1);assert.equal(box.cancelLoad(),true);assert.equal(Atomics.load(m.HEAP32,(base+OFF.evType)/4),0x43414e43);finish(m,new Uint8Array(4));await load;assert.equal(box.cancelLoad(),false);
+});
 test('page evaluation and DOM mirroring opcodes not exposed',async()=>{const {box}=fixture();for(const op of [5,6,7,8,9,11])await assert.rejects(box.command({op},1,1),/Disallowed/);});
 test('oversized UTF8 rejected before submission without poisoning mailbox',async()=>{const {box,m}=fixture();await assert.rejects(box.command({op:OP.key,key:'é'.repeat(40)},1,1),/capacity/);assert.equal(box.failed,false);assert.equal(m.HEAP32[base/4],10);});
 test('timeout poisons mailbox; no uncertain reuse',async()=>{const {box}=fixture(8);await assert.rejects(box.command({op:OP.paint},1,1),/timed out/);assert.equal(box.failed,true);await assert.rejects(box.command({op:OP.paint},1,1),/failed/);});

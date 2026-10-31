@@ -144,7 +144,7 @@ async function init(payload){
   await nativeReady;
   if(dead)throw new Error('Window closed during engine initialization.');
   if(typeof moduleInstance.PThread?.terminateAllThreads!=='function')throw new Error('Missing lifetime export. Apply the supplied native patch.');
-  if(typeof moduleInstance._browser_embed_abi!=='function' || moduleInstance._browser_embed_abi()!==1)throw new Error('Native browser ABI patch missing.');
+  if(typeof moduleInstance._browser_embed_abi!=='function' || moduleInstance._browser_embed_abi()!==2)throw new Error('Native browser ABI patch missing or incompatible.');
   mailbox=new Mailbox(moduleInstance,moduleInstance._xul_cmd_ptr(),config.commandTimeoutMs,engineMemory);
   // The upstream minimal GRE omits download modules. Restore the reviewed
   // exact-revision sources into this window's private, ephemeral guest FS.
@@ -285,6 +285,17 @@ self.onmessage=e=>{
     void init(m.payload).then(v=>reply(m.id,true,v)).catch(e=>{reply(m.id,false,e.message);fatal(e);});return;
   }
   if(!ready){if(m.kind==='request')reply(m.id,false,'Engine is starting.');return;}
+  if(m.kind==='request'&&m.type==='control'&&m.payload?.action==='stop') {
+    // Cancel loads still waiting behind another native operation as well as an
+    // active load. Otherwise immediate Stop can sit behind a queued navigation.
+    for(let i=queue.length-1;i>=0;i--){
+      const item=queue[i];
+      if(item.kind==='request' && (item.type==='navigate'||item.type==='open-html')){
+        queue.splice(i,1);reply(item.id,false,'Navigation stopped.');
+      }
+    }
+    mailbox?.cancelLoad();
+  }
   if(m.kind==='request'||m.kind==='notice')enqueue(m);
 };
 self.addEventListener('unhandledrejection',e=>{e.preventDefault();fatal(e.reason);});
