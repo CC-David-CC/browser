@@ -128,14 +128,21 @@ class Relay:
                 self.users[principal.sub]=self.users.get(principal.sub,0)+1;self.active_streams+=1;reserved=True
                 addresses=policy.check_addresses(await asyncio.wait_for(self.resolver(name,port),CONNECT_TIMEOUT))
                 if len(addresses)>32:raise PolicyDenied('Too many resolved addresses')
-                for address in addresses:self.check_network(address)
+                for address in addresses:self.check_stream(name,port,address)
                 # Some hosts publish IPv6 even when this relay has no IPv6 route.
                 # Try each already-vetted address with a bounded total deadline;
                 # never ask DNS again during connection establishment.
                 async with asyncio.timeout(CONNECT_TIMEOUT):
                     for address in addresses:
                         try:
+                            self.check_stream(name,port,address)
                             reader,writer=await asyncio.wait_for(self.connector(address,port),3)
+                            try:self.check_stream(name,port,address)
+                            except BaseException:
+                                writer.close()
+                                try:await asyncio.wait_for(writer.wait_closed(),2)
+                                except (Exception,asyncio.CancelledError):pass
+                                raise
                             break
                         except (OSError,TimeoutError):continue
                     else:raise OSError('No validated address was reachable')

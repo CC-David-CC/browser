@@ -134,6 +134,33 @@ class WispRelayTests(unittest.IsolatedAsyncioTestCase):
             await asyncio.sleep(.01)
         self.assertFalse(self.relay.users)
 
+    async def test_policy_change_during_dns_prevents_connection(self):
+        started=asyncio.Event();release=asyncio.Event();blocked=False
+        async def resolve(_name,_port):
+            started.set();await release.wait();return ['1.1.1.1']
+        def check(_address):
+            if blocked:raise ValueError('blocked')
+        self.relay.resolver=resolve;self.relay.network_check=check
+        async with self.client.ws_connect(f'http://127.0.0.1:{self.port}/wisp/',headers={'Origin':'http://127.0.0.1','X-Test-Auth':'registered'}) as ws:
+            await self.read(ws);await ws.send_bytes(self.pkt(1,1,bytes([1])+struct.pack('<H',443)+b'grainger.com'))
+            await asyncio.wait_for(started.wait(),2);blocked=True;release.set()
+            self.assertEqual(await self.read(ws),((4,1),b'\x48'))
+            self.assertEqual(self.connections,[])
+
+    async def test_policy_change_during_connect_closes_new_socket(self):
+        started=asyncio.Event();release=asyncio.Event();blocked=False;writers=[]
+        async def connect(_address,_port):
+            reader,writer=await asyncio.open_connection('127.0.0.1',self.echo_port)
+            writers.append(writer);started.set();await release.wait();return reader,writer
+        def check(_address):
+            if blocked:raise ValueError('blocked')
+        self.relay.connector=connect;self.relay.network_check=check
+        async with self.client.ws_connect(f'http://127.0.0.1:{self.port}/wisp/',headers={'Origin':'http://127.0.0.1','X-Test-Auth':'registered'}) as ws:
+            await self.read(ws);await ws.send_bytes(self.pkt(1,1,bytes([1])+struct.pack('<H',443)+b'grainger.com'))
+            await asyncio.wait_for(started.wait(),2);blocked=True;release.set()
+            self.assertEqual(await self.read(ws),((4,1),b'\x48'))
+            self.assertTrue(writers[0].is_closing())
+
     async def test_disconnect_cancels_slow_connection_and_releases_capacity(self):
         started=asyncio.Event();cancelled=asyncio.Event()
         async def resolve(name,port):

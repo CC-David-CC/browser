@@ -54,13 +54,17 @@ class Downloader:
                 audit_event('denied',url.host,port,0)
                 raise
             domains.append(name)
-            resolver=CheckedResolver(policy,self.relay.resolver,self.relay.network_check)
+            def check_address(ip):
+                if hasattr(self.relay,'check_stream'):self.relay.check_stream(name,port,ip)
+                else:self.relay.network_check(ip)
+            resolver=CheckedResolver(policy,self.relay.resolver,check_address)
             connector=TCPConnector(resolver=resolver,use_dns_cache=False,force_close=True,limit=1)
             timeout=ClientTimeout(total=MAX_TRANSFER_SECONDS,connect=10,sock_read=READ_IDLE_SECONDS)
             opened=False;size=0;content=None
             try:
               async with ClientSession(connector=connector,timeout=timeout,trust_env=False,auto_decompress=False) as session:
                 async with session.get(url,allow_redirects=False,headers={hdrs.ACCEPT_ENCODING:'identity'}) as response:
+                    for ip in resolver.allowed:check_address(ip)
                     audit_event('opened',name,port,0);opened=True
                     if response.status in (301,302,303,307,308):
                         if step==MAX_REDIRECTS:raise PolicyDenied('Too many download redirects')

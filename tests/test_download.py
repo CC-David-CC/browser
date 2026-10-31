@@ -18,8 +18,9 @@ class FixturePolicy:
 
 class DownloadTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        self.calls=[];self.blocked=False
+        self.calls=[];self.requests=[];self.blocked=False
         async def route(request):
+            self.requests.append(request.path)
             if request.path=='/redirect':raise web.HTTPFound('/file')
             if request.path=='/blocked':raise web.HTTPFound('http://blocked.example:'+str(self.port)+'/file')
             if request.path=='/large':return web.Response(body=b'x'*(MAX_DOWNLOAD+1))
@@ -56,6 +57,18 @@ class DownloadTests(unittest.IsolatedAsyncioTestCase):
         self.blocked=True
         with self.assertRaises(PolicyDenied):await self.download.fetch(self.base+'/file')
         with self.assertRaises(PolicyDenied):await self.download.fetch(self.base+'/file',check_alive=lambda:(_ for _ in ()).throw(PolicyDenied('expired')))
+
+    async def test_policy_change_during_dns_stops_request(self):
+        started=asyncio.Event();release=asyncio.Event()
+        async def resolve(_name,_port):
+            started.set();await release.wait();return ['127.0.0.1']
+        def current_policy(name,port,ip):
+            if self.blocked:raise PolicyDenied('Destination newly blocked')
+        self.relay.resolver=resolve;self.relay.check_stream=current_policy
+        task=asyncio.create_task(self.download.fetch(self.base+'/file'))
+        await asyncio.wait_for(started.wait(),2);self.blocked=True;release.set()
+        with self.assertRaises(PolicyDenied):await task
+        self.assertEqual(self.requests,[])
 
     async def test_optional_audit_covers_redirects_and_denied_targets_without_paths(self):
         events=[]
