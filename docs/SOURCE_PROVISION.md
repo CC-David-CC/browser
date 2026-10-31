@@ -244,3 +244,7 @@ SHA-256 `1772fa4cc0e5ec205a163b9e6467ba18ffabf782e6c3a38f62316e9ad84f520d`.
 The archive is listed on the public source index. The exact font assets and
 notices ship with the Browser bundle; the archive contains the reproducible
 font staging instructions and SHA-256 pins, not generated font binaries.
+
+The Browser relay-recovery UI integration source is published and indexed at
+`https://ksu.codes/browser-sources/codi-browser-source-808fac040.tar.zst`,
+SHA-256 `8a5d4ee98efd14272379a54665dce2c3a21fd92aff4871281ab2ff674b4a4249`.
