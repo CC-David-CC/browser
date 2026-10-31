@@ -10,6 +10,7 @@ import time
 from urllib.parse import quote
 from urllib.parse import urlsplit
 from aiohttp import ClientError, web
+from cryptography.exceptions import InvalidSignature
 from .authorization import NetworkDenied
 
 _ID=re.compile(r'[A-Za-z0-9_-]{43}\Z')
@@ -22,14 +23,15 @@ async def disk_io(function,*args):
         finally:raise
 
 class BrowserHTTP:
-    def __init__(self,sessions,relay,*,origin,base_path='',secure_cookie=True,downloader=None):
+    def __init__(self,sessions,relay,*,origin,base_path='',secure_cookie=True,downloader=None,reports=None):
         u=urlsplit(origin)
         if not u.hostname or u.username or u.password or u.path or u.query or u.fragment or origin!=u.geturl() or (u.scheme!='https' and not (u.scheme=='http' and u.hostname=='127.0.0.1' and not secure_cookie)):
             raise ValueError('HTTPS origin or explicit loopback test origin required')
         self.sessions=sessions;self.relay=relay;self.origin=origin;self.host=u.netloc
         self.base=base_path+'/browser-relay';self.secure_cookie=secure_cookie
         self.cookie='__Secure-codi-browser' if secure_cookie else 'codi-browser-test'
-        relay.authenticate=self.authenticate;self.downloader=downloader;self.downloads={}
+        relay.authenticate=self.authenticate;self.downloader=downloader;self.downloads={};self.reports=reports
+        self.report_slots=asyncio.Semaphore(2)
 
     def routes(self,app):
         app.router.add_post(self.base+'/challenge',self.initial)
@@ -38,18 +40,26 @@ class BrowserHTTP:
         app.router.add_post(root+'/authorize',self.authorize)
         app.router.add_post(root+'/close',self.close)
         if self.downloader:app.router.add_post(root+'/download',self.download)
+        if self.reports:
+            app.router.add_post(root+'/reports/pending',self.report_pending)
+            app.router.add_post(root+'/reports/role',self.report_role)
+            app.router.add_post(root+'/reports/list',self.report_list)
+            app.router.add_post(root+'/reports/submit',self.report_submit)
+            app.router.add_post(root+'/reports/create',self.report_create)
+            app.router.add_post(root+'/reports/summary',self.report_summary)
+            app.router.add_post(root+'/reports/remove',self.report_remove)
         app.router.add_get(root+'/wisp/',self.relay.handle)
 
-    def headers(self,request):
+    def headers(self,request,maximum=16384):
         for name in ('Host','Origin'):
             if len(request.headers.getall(name,[]))!=1:raise web.HTTPForbidden()
         if request.host!=self.host or request.headers['Origin']!=self.origin:raise web.HTTPForbidden()
         if request.query_string or request.method!='POST' or request.content_type!='application/json' or request.headers.get('Content-Encoding') or request.headers.get('Transfer-Encoding'):
             raise web.HTTPBadRequest()
-        if request.content_length is None or not 0<request.content_length<=16384:raise web.HTTPBadRequest()
+        if request.content_length is None or not 0<request.content_length<=maximum:raise web.HTTPBadRequest()
 
-    async def body(self,request,keys):
-        self.headers(request)
+    async def body(self,request,keys,maximum=16384):
+        self.headers(request,maximum)
         def unique(pairs):
             result={}
             for key,value in pairs:
@@ -57,7 +67,7 @@ class BrowserHTTP:
                 result[key]=value
             return result
         try:
-            async with asyncio.timeout(5):raw=await request.read()
+            async with asyncio.timeout(60 if maximum>16384 else 5):raw=await request.read()
             if len(raw)!=request.content_length:raise ValueError('Truncated body')
             value=json.loads(raw.decode('utf-8'),object_pairs_hook=unique)
             if not isinstance(value,dict) or set(value)!=set(keys):raise ValueError('Invalid request')
@@ -81,7 +91,9 @@ class BrowserHTTP:
 
     async def initial(self,request):
         await self.body(request,[])
-        try:return self.response(self.sessions.create())
+        try:
+            challenge=self.sessions.create();challenge['report_requests']=bool(self.reports)
+            return self.response(challenge)
         except NetworkDenied:raise web.HTTPTooManyRequests() from None
 
     async def challenge(self,request):
@@ -107,6 +119,27 @@ class BrowserHTTP:
         response=self.response({'closed':True})
         response.del_cookie(self.cookie,path=self.base+'/connection/'+identifier+'/')
         return response
+
+    async def report_call(self,request,keys,method,*,maximum=16384):
+        self.headers(request,maximum);identifier=self.identifier(request)
+        try:principal=self.sessions.principal(identifier,self.secret(request))
+        except (NetworkDenied,ValueError):raise web.HTTPUnauthorized() from None
+        if not principal:raise web.HTTPUnauthorized()
+        try:
+            async with self.report_slots:
+                body=await self.body(request,keys,maximum)
+                value=await disk_io(method,principal,*(body[key] for key in keys))
+            return self.response(value)
+        except PermissionError:raise web.HTTPForbidden() from None
+        except (ValueError,TypeError,KeyError,InvalidSignature):raise web.HTTPBadRequest() from None
+
+    async def report_pending(self,request):return await self.report_call(request,[],self.reports.pending)
+    async def report_role(self,request):return await self.report_call(request,[],self.reports.role)
+    async def report_list(self,request):return await self.report_call(request,[],self.reports.list_admin)
+    async def report_create(self,request):return await self.report_call(request,['seconds'],self.reports.create)
+    async def report_submit(self,request):return await self.report_call(request,['request','report'],self.reports.submit,maximum=12*1024*1024+4096)
+    async def report_summary(self,request):return await self.report_call(request,['request','subject'],self.reports.summary)
+    async def report_remove(self,request):return await self.report_call(request,['request'],self.reports.remove)
 
     async def download(self,request):
         body=await self.body(request,['url']);identifier=self.identifier(request)
