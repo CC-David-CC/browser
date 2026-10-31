@@ -467,3 +467,39 @@ Updated Browser and network-policy documentation is included in the signed-in
 source snapshot `codi-browser-source-f15af44a6.tar.zst`, SHA-256
 `27e670c3bdae08bfe550ca6d732fc483e22d5ca50704f3d18b26ec7f02b01d27`.
 The complete archive was verified through a registered live session.
+
+An isolated reproduction of the Gecko **relocatable** libxul link was run
+with a linker map. The initial `make -n` output describes an ordinary `-shared`
+link that includes `liblgpllibs.so`; upstream's pinned
+`gecko.js/relink-engine-r.sh` (SHA-256
+`b96aa5d48f85548ce715c5114b35fe719f358c25db910b93165177f1d235d672`)
+replaces `-shared` with `-r`, removes ELF-only flags, and drops dependent
+`.so` inputs, including `liblgpllibs.so`. The isolated audit applied those
+same transformations, directed output to a new directory, and added the
+linker map option. It did not overwrite the retained build. An initial attempt
+incorrectly used the unmodified `-shared` recipe; it reproduced upstream's
+known linker crash and did not produce the audit result.
+
+The resulting library SHA-256 was
+`48fdea509ed523c5296d3a677f9c73eec4798b27d64ac02545b02717246b5975`.
+`tools/verify_relinked_wasm.py` compared it with the retained libxul SHA-256
+`e600c6226797fb32a7ec1501de5e541a78aed7540bb3fa2a04ea9ebb854e185b`:
+all 25 sections matched except the custom build ID and module-name subsection;
+the remaining name subsections and all other sections matched byte-for-byte.
+The map SHA-256 was
+`2683bbc21bc944cd4df6bd158dd0469be4be8a01c479dfe2f4b209e1362fa6b0`.
+`tools/inventory_rust_linkmap.py` verified it against the pinned archive
+inventory and produced a compact summary SHA-256
+`884def0e8d434541b351eabf43598098fc209423dc414a0794e2fe64871aef54`:
+268,435 map entries referred to 5,269 distinct `libgkrust.a` members, covering
+328 crate/build pairs and 326 package names. Of those names, 204 have vendored
+manifests, 117 have other tracked manifests, and five are Rust toolchain names.
+The map includes the three previously identified native archive members.
+
+This is stronger evidence about the intermediate link than the archive list,
+but it is not a map of the final Browser WASM. Optimizations and inlining can
+move code between objects, and the final link may remove sections. Neither a
+missing entry nor a notice heading alone proves a dependency's absence or
+complete legal compliance. The disposable 3.2 GiB library and 316 MiB map
+were removed after recording their hashes and compact summary; reproduce them
+from the pinned build inputs and documented relink transformation if needed.
