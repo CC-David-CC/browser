@@ -287,3 +287,7 @@ unresolved dependencies or full final-link inventory.
 The HTML import update's Browser source is available and indexed at
 `https://ksu.codes/browser-sources/codi-browser-source-1573b1ffc.tar.zst`,
 SHA-256 `4f376d5619d916adf902c7818bc2f8a577c2849a830db27790aa045d00f3f4a5`.
+
+The Browser download-buffer update's source is available and indexed at
+`https://ksu.codes/browser-sources/codi-browser-source-b6b5d43e2.tar.zst`,
+SHA-256 `574d6652461794e99cb746e90da5c50b168283e5e12b6cf2ab27f5851a9cb999`.
