@@ -28,6 +28,8 @@ SOURCES={
  'codi-browser-source-29a71d717.tar.zst':'f231dfee54279c20c6bca77988b556d6fcad7c8886792eb78c63e1f9c10b680b',
  'codi-browser-source-f4a43b30e.tar.zst':'3e090e5a9508f0ff53aae97791ff21c71dc38afb5d84bc9cc2cc54f304aeb42c',
  'codi-browser-source-ee1704dcd.tar.zst':'0ef62be5518d9cbd01543efd9bacafc22238ac6b4ca7a00719898753cfbab60a',
+ 'codi-browser-source-f70a64aa3.tar.zst':'1772fa4cc0e5ec205a163b9e6467ba18ffabf782e6c3a38f62316e9ad84f520d',
+ 'codi-browser-source-808fac040.tar.zst':'8a5d4ee98efd14272379a54665dce2c3a21fd92aff4871281ab2ff674b4a4249',
  'codi-relay-source-05e70e3b0.tar.zst':'6031d72c1c102de2260a634e9e1b8b559f8cccf292b6512e9270e348f2df5ef9',
 }
 FIREFOX_LICENSE_SHA='e84624c9655b7d4d28a35e1539fdba8420b141ed4d12c791ab7a53e996a84701'
@@ -40,6 +42,7 @@ RLBOX_LICENSE_SHA='891d419ba95ab39090775820f4178421dbdcd241c080003aa44f62445a486
 GRAPHICS_NOTICES_SHA='a447f4de3c0b4b60c6bf707811d89a9f8a5ec0e7297eb0e82573ea196b06196e'
 FREETYPE_LICENSE_SHA='5a5ee54c5001bbad1cdc1a57cc3dd4c42199b2da09d39c7ee41fab002d02967f'
 RUST_UPSTREAM_NOTICES_SHA='9cd8a4dddcf8e6617435d59de8051734425dc8af5cea1fde6be914404b73db92'
+ENUM_MAP_NOTICES_SHA='e3caa11d93d7b92ea4bb5f5f5d2006f50304446abe1229516df5b4f8b7cb56a3'
 EMS_LICENSES=('LICENSE','system/lib/libunwind/LICENSE.TXT','system/lib/mimalloc/LICENSE',
               'system/lib/libc/musl/COPYRIGHT','system/lib/libcxx/LICENSE.TXT',
               'system/lib/compiler-rt/LICENSE.TXT','system/lib/llvm-libc/LICENSE.TXT',
@@ -53,7 +56,7 @@ def sha(path):
     return h.hexdigest()
 def member(archive,name):
     return subprocess.run(['tar','--zstd','-xOf',str(archive),name],check=True,capture_output=True).stdout
-def prepare(firefox_license,emscripten,wisp,adapter_license,liberation_license,compiled_notices,rust_notices,rust_stdlib,pulse_license,rlbox_license,graphics_notices,freetype_license,rust_upstream_notices,out):
+def prepare(firefox_license,emscripten,wisp,adapter_license,liberation_license,compiled_notices,rust_notices,rust_stdlib,pulse_license,rlbox_license,graphics_notices,freetype_license,rust_upstream_notices,enum_map_notices,out):
     out=Path(out).absolute()
     if out.exists() or out.is_symlink() or not out.parent.is_dir():raise ValueError('New output directory required')
     if sha(firefox_license)!=FIREFOX_LICENSE_SHA:raise ValueError('Firefox notice is not from the pinned build')
@@ -68,6 +71,7 @@ def prepare(firefox_license,emscripten,wisp,adapter_license,liberation_license,c
     if sha(graphics_notices)!=GRAPHICS_NOTICES_SHA:raise ValueError('Wrong graphics component notices')
     if sha(freetype_license)!=FREETYPE_LICENSE_SHA:raise ValueError('Wrong FreeType license')
     if sha(rust_upstream_notices)!=RUST_UPSTREAM_NOTICES_SHA:raise ValueError('Wrong upstream Rust notices')
+    if sha(enum_map_notices)!=ENUM_MAP_NOTICES_SHA:raise ValueError('Wrong enum-map notices')
     raw=Path(firefox_license).read_text(encoding='utf-8')
     # Retain the license text; make Firefox-internal links usable as a normal
     # same-origin webpage and remove Firefox-only stylesheet references.
@@ -86,6 +90,7 @@ def prepare(firefox_license,emscripten,wisp,adapter_license,liberation_license,c
     ems.append(Path(graphics_notices).read_text(encoding='utf-8').rstrip()+'\n')
     ems.append('===== FreeType 2.14.2 docs/FTL.TXT =====\n'+Path(freetype_license).read_text(encoding='utf-8').rstrip()+'\n')
     ems.append(Path(rust_upstream_notices).read_text(encoding='utf-8').rstrip()+'\n')
+    ems.append(Path(enum_map_notices).read_text(encoding='utf-8').rstrip()+'\n')
     license_wisp=member(wisp,'LICENSE');adapter=Path(adapter_license).read_bytes()
     links='\n'.join('<li><a href="'+html.escape(name,quote=True)+'">'+html.escape(name)+'</a><br><code>SHA-256 '+value+'</code></li>' for name,value in SOURCES.items())
     index='''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Browser licenses and source</title></head><body><main><h1>Browser licenses and source</h1>
@@ -105,7 +110,7 @@ def prepare(firefox_license,emscripten,wisp,adapter_license,liberation_license,c
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
-    for name in ('firefox-license','emscripten','wisp','adapter-license','liberation-license','compiled-notices','rust-notices','rust-stdlib','pulse-license','rlbox-license','graphics-notices','freetype-license','rust-upstream-notices','out'):p.add_argument('--'+name,type=Path,required=True)
+    for name in ('firefox-license','emscripten','wisp','adapter-license','liberation-license','compiled-notices','rust-notices','rust-stdlib','pulse-license','rlbox-license','graphics-notices','freetype-license','rust-upstream-notices','enum-map-notices','out'):p.add_argument('--'+name,type=Path,required=True)
     a=p.parse_args()
-    try:print(json.dumps(prepare(a.firefox_license,a.emscripten,a.wisp,a.adapter_license,a.liberation_license,a.compiled_notices,a.rust_notices,a.rust_stdlib,a.pulse_license,a.rlbox_license,a.graphics_notices,a.freetype_license,a.rust_upstream_notices,a.out),indent=2))
+    try:print(json.dumps(prepare(a.firefox_license,a.emscripten,a.wisp,a.adapter_license,a.liberation_license,a.compiled_notices,a.rust_notices,a.rust_stdlib,a.pulse_license,a.rlbox_license,a.graphics_notices,a.freetype_license,a.rust_upstream_notices,a.enum_map_notices,a.out),indent=2))
     except (ValueError,OSError,subprocess.CalledProcessError) as error:p.error(str(error))

@@ -268,3 +268,18 @@ and license comparison. The upstream-notice input now hashes to
 the public combined notice hashes to
 `c2717cef7dd3d8485cd4ddfa39101b4ae893353cd63240d0078085b47bc9b05c`.
 Other previously stated final-link and attribution limitations still apply.
+
+The pinned `enum-map 2.7.3` crate points to Codeberg revision
+`c788a9c4bd0431308d889942719f7a38761d9884`, whose repository now resolves
+under `sugar700/enum-map`. Its `LICENSES/` directory contains the MIT and
+Apache-2.0 license texts; the MIT template has placeholder copyright fields,
+so the notices also preserve the distinct SPDX copyright lines found in the
+vendored crate. `tools/collect_enum_map_notices.py /path/to/pinned/firefox
+OUTPUT` checks the Cargo lock checksum, package metadata, revision and both
+license-file hashes before producing the input, SHA-256
+`e3caa11d93d7b92ea4bb5f5f5d2006f50304446abe1229516df5b4f8b7cb56a3`.
+Supply it to `prepare_notices.py --enum-map-notices`; rebuilding from the pinned
+inputs produced the same combined notice now served publicly, SHA-256
+`fbca71d13f022e85945e762d7cb5a9d9939ac7b25cbf803b0b1a24759b5d8329`.
+This addresses the identified non-GitHub license files, not the remaining
+unresolved dependencies or full final-link inventory.
