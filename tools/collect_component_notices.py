@@ -10,7 +10,8 @@ PATHS=('third_party/abseil-cpp/LICENSE','third_party/dav1d/COPYING',
        'media/libjpeg/LICENSE.md','media/libjpeg/README.ijg','media/libmkv/LICENSE',
        'media/libnestegg/LICENSE','media/libpng/LICENSE','media/libspeex_resampler/COPYING',
        'media/libwebp/COPYING','media/libyuv/LICENSE','media/libcubeb/LICENSE',
-       'third_party/content_analysis_sdk/LICENSE')
+       'third_party/content_analysis_sdk/LICENSE',
+       'third_party/rust/seahash/Cargo.toml.orig')
 
 def collect(repo):
     def git(*args):return subprocess.check_output(['git','-C',str(repo),*args])

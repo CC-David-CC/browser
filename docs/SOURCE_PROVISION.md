@@ -136,6 +136,26 @@ page includes libevent. The full generated JSON report had SHA-256
 This covers only explicit generated includes, not transitive headers, other
 link inputs, resources, or proof of retained code in the final WASM.
 
+The actual shipped Gecko WASM has SHA-256
+`6736dce5b81479667da894deb15860999f43a4178b9e81eb68f1d10d3508db1b`.
+`tools/inspect_engine_function_names.py` checks that pin and reads its function
+name subsection: 367,777 function names include 15 `svg_fmt::` references,
+18 `seahash::` references, 19 `app_units::` references and 413
+`content_analysis::sdk::` references. Names can refer to types in functions
+compiled elsewhere, and no match does not establish absence due to inlining
+or stripped names. The scan is therefore not a complete final-link inventory.
+
+The SeaHash 4.1.0 metadata from pinned Firefox source is now reproduced in
+the combined notice. It names its package authors and declares MIT; the
+exact upstream GitLab commit `94b632aeac099031c373599313d5b5f0acbbaec0`
+has the same original Cargo metadata (SHA-256
+`dd213de338ca98b7ef7a2562bcf4e4214d215d1a8277750a6a72b4e809c8d0dd`)
+but no separate license file. This metadata does not establish a copyright
+notice that was not present in that release. The regenerated component input
+SHA-256 is `c9b1404daaf15a61caed276471a9910b4234a168e82b358d22b57f8dc02d0a7b`;
+the signed-in combined notice is
+`3f2781508e089b26b8c9af60f0820bd8085aaa9bb9d77d4c21aef852266c519a`.
+
 The actual target Cargo fingerprint directory contains 477 distinct names;
 335 match vendored Rust package names. `tools/collect_rust_notices.py` collects
 the declared licenses and available license/notice files for all matching
