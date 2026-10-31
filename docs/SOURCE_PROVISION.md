@@ -549,3 +549,14 @@ is also included. The exact original revision used for the port is unverified. T
 The full pinned Firefox source remains available from the signed-in source
 page. The final-link symbol match identifies the package, but does not by
 itself prove which functions from each module survived optimization.
+
+The source-notice collector also scans the first 100 lines of tracked Rust, C
+and C++ source files in 195 vendored packages with unambiguous final-link
+symbol matches. It retains complete matched copyright-bearing comment blocks,
+deduplicated with their source paths: 85 distinct blocks from 482 file
+references, SHA-256
+`2f7b3f7d5e6892292b83d2b8808f67661cdb66ea6d3b618c59a17d6e3cab59a7`.
+This includes the Sun notices in libm. It excludes test/example directories,
+comments past the scanned prefix, unmatched or ambiguous-only packages, and
+other dependencies. It is an evidence-based conservative addition, not proof
+that the listed files survived linking or that the wider review is complete.
