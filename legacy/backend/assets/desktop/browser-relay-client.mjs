@@ -86,7 +86,7 @@ export async function openBrowserRelay(config,session,{valid=()=>true,onFailure=
     summary:(request,subject=null)=>post(root+'/reports/summary',{request:reportId(request),subject},null,{maxResponse:1024*1024}),
     remove:request=>post(root+'/reports/remove',{request:reportId(request)}),
   }):null;
-  return {url:url.href,reports,async download(source){
+  return {url:url.href,sourceURL:root+'/sources/',reports,async download(source){
     check();requireThat(!closed,'Browser networking has disconnected.');
     const response=await fetch(root+'/download',{method:'POST',mode:'same-origin',credentials:'same-origin',redirect:'error',cache:'no-store',referrerPolicy:'no-referrer',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:source}),signal:AbortSignal.any([downloadAbort.signal,AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS)])});
     if(!response.ok){let result;try{result=await response.json();}catch{}throw Error(relayUnavailable(response.status)||result?.error||'Download failed ('+response.status+').');}
