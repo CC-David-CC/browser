@@ -68,3 +68,19 @@ stalled, repeated and overlapping commands, window closure, phone behavior,
 and failures. Ensure the UI reports cancellation only after the engine has
 actually processed it. The experimental WASM SHA-256 was
 `13a8022769bfb2486471515d40e9af40df11ff901b2ac2bf4f4dd5b64b954828`.
+
+## Integrated candidate (not deployed)
+
+The prototype is now integrated into `tools/patch_engine.py` and paired with
+`browser-gecko-mailbox-v2`; both the manifest and the native exported ABI must
+match the worker. An isolated build from the pinned revisions produced WASM
+SHA-256 `23b02f87791ad87208faf3680c5269ce0a7dc77c7bf33c7f88986e52d2ea5e2b`.
+Against this exact build, a slow-response Stop completed in 68 ms, subsequent
+navigation and immediate Stop worked, and a clean-fixture two-window test
+showed that stopping one window did not disrupt the other. A phone-sized
+emulated layout also passed Stop, and closing the window during a later slow
+load followed by reopening worked. This is not a physical-phone test or proof
+that a completely stalled Gecko event loop can process cancellation. Unit
+tests cover refusing an incompatible manifest and only signaling active loads.
+Before shipping, publish the corresponding v2 source and native patch, complete
+the remaining failure/lifecycle review, and verify the built deployment live.
