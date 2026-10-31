@@ -16,6 +16,8 @@ from .policy import DestinationPolicy, PolicyDenied, DownloadTooLarge
 
 MAX_DOWNLOAD=128*1024*1024
 MAX_REDIRECTS=5
+MAX_TRANSFER_SECONDS=30*60
+READ_IDLE_SECONDS=60
 
 async def disk_io(function,*args):
     task=asyncio.create_task(asyncio.to_thread(function,*args))
@@ -54,7 +56,7 @@ class Downloader:
             domains.append(name)
             resolver=CheckedResolver(policy,self.relay.resolver,self.relay.network_check)
             connector=TCPConnector(resolver=resolver,use_dns_cache=False,force_close=True,limit=1)
-            timeout=ClientTimeout(total=60,connect=10,sock_read=15)
+            timeout=ClientTimeout(total=MAX_TRANSFER_SECONDS,connect=10,sock_read=READ_IDLE_SECONDS)
             opened=False;size=0;content=None
             try:
               async with ClientSession(connector=connector,timeout=timeout,trust_env=False,auto_decompress=False) as session:

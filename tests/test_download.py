@@ -3,6 +3,7 @@ from pathlib import Path
 import sys
 import unittest
 from types import SimpleNamespace
+from unittest.mock import patch
 from aiohttp import web
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from relay.download import Downloader,MAX_DOWNLOAD
@@ -32,6 +33,13 @@ class DownloadTests(unittest.IsolatedAsyncioTestCase):
         self.download=Downloader(self.relay,load_policy=lambda _:FixturePolicy())
         self.base='http://allowed.example:'+str(self.port)
     async def asyncTearDown(self):await self.runner.cleanup()
+
+    async def test_transfer_timeout_allows_slow_downloads_and_still_bounds_idle(self):
+        from aiohttp import ClientTimeout
+        with patch('relay.download.ClientTimeout', wraps=ClientTimeout) as factory:
+            result=await self.download.fetch(self.base+'/file')
+            result['file'].close()
+        self.assertEqual(factory.call_args.kwargs,{'total':1800,'connect':10,'sock_read':60})
 
     async def test_download_and_redirect_are_checked(self):
         result=await self.download.fetch(self.base+'/redirect')
