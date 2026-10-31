@@ -426,3 +426,39 @@ The updated notice-generator source is also indexed for signed-in users as
 A live registered test downloaded and verified the complete archive. This
 supplements the runtime's existing source snapshot and does not establish a
 complete final-link inventory.
+
+The retained `libgkrust.a` Rust static archive supplied to Gecko's libxul link
+has SHA-256 `78d6b99aae1276937b77756aede0a102a17357b3b7222509cc9efb9a1e8b5dcd`.
+`tools/inventory_rust_archive.py` checks that archive and the Firefox revision,
+reads its member list and associates crate build hashes with Cargo target
+fingerprints. It found 5,713 archive members, including 470 crate/build-hash
+pairs representing 454 package names. Of those names, 445 match tracked Cargo
+manifests; the other nine are Rust standard-library or compiler packages.
+The generated inventory SHA-256 is
+`dc4b75f92974d6b68738c53e94b9c904031b65c4632877adc5ebfc95e7676f28`.
+The archive input includes objects for app_units, core_maths, debug_tree,
+seahash, svg_fmt and void. It does not establish which objects survived the
+Gecko and final WASM links.
+
+`tools/verify_rust_archive_notices.py` checked that the exact existing Rust
+notice input is included in the live combined notices and that all 318
+vendored package/version manifests identified in this archive have headings
+in that input. This is heading coverage, not a finding that all license texts
+or copyright notices are complete. The other tracked packages include Firefox
+workspace manifests; the earlier workspace header review applies to the
+22 manifests without explicit license fields. The nine unmatched package
+names correspond to Rust toolchain components, for which the toolchain's
+copyright and dependency notice HTML is included. Three archive members do
+not use Rust crate names: their retained build directories identify them as
+cubeb-core's `src/log.c`, mozglue's `wrappers.cpp`, and SWGL's `src/gl.cc`;
+the cubeb-core package declares ISC and supplies a LICENSE, while the two
+Firefox C++ files carry MPL 2.0 headers. These observations do not prove that
+every non-Rust, generated, transitive, or final-link obligation is covered.
+
+The retained Gecko build's `backend.mk` lists `libgkrust.a` among static link
+inputs; its SHA-256 is
+`a4f22e3c896c5ceabfcecd81a7f0f18f87cad631cb76f46b2360f09959e86e4e`.
+The staged `libxul.stripped.so` and corresponding Gecko build output match
+SHA-256 `e600c6226797fb32a7ec1501de5e541a78aed7540bb3fa2a04ea9ebb854e185b`.
+This is evidence about retained build inputs, not a reproducible final-link
+map or a legal determination.
