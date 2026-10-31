@@ -29,6 +29,12 @@ samples all reported `false`. The experiment was not deployed. A progress
 listener or another authoritative signal needs its own verification; neither a
 changed URL nor this flag alone proves navigation has finished.
 
+A subsequent diagnostic progress-listener build observed a matching completion
+after a delayed response and a nonzero result for a blocked connection. An
+HTTP 404 nevertheless returned a zero Gecko network result, so that result
+cannot by itself indicate a successful HTTP page. The prototype is unshipped;
+see `experiments/README.md` for evidence and remaining checks.
+
 ## Historical source handoff 0.1.0
 
 The following report describes the earlier source-only handoff and is retained
