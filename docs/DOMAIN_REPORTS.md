@@ -54,3 +54,11 @@ unavailable message, then restarted it and reconnected with **Reset engine**.
 It repeated the test with an already-open Browser and verified that a new page
 loaded after reconnection. This verifies the manual recovery flow, not automatic
 restoration of a temporary browsing profile. Server-side audit remained off.
+
+The current live release was also tested with a disposable account while no
+administrator report request was active. Its example.com event appeared in
+browser storage; over more than one 30-second polling interval, the test saw
+no report-submission request and no stored report for that account. No global
+report request was created, and the test account was removed. This checks the
+observed no-request path, not whether a device reports every domain or whether
+other browsers are free of requests at other times.
