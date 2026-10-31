@@ -1,5 +1,5 @@
 {
-  "description": "Upstream license files at revisions identified by checksum-verified Cargo packages or pinned git dependencies. This is a conservative target-build set, not an exact final-link inventory.",
+  "description": "Upstream license files from pinned revisions; svg_fmt uses an explicitly source-matched historical tree because its package revision is unavailable. This is a conservative target-build set, not an exact final-link inventory.",
   "sources": [
     {
       "files": [
@@ -259,6 +259,19 @@
       ],
       "repository": "https://github.com/martinthomson/ohttp",
       "revision": "600931b5a1e947776cbaad931ed78f1e89005352"
+    },
+    {
+      "files": [
+        {
+          "path": "LICENSE",
+          "sha256": "7e98bed7f100747aaae7d82ab94fbe6b76fd6b84b09a3aaa413bff8196d0fbb1"
+        }
+      ],
+      "packages": [
+        "svg_fmt 0.4.1 (source-matched historical tree; package revision unavailable)"
+      ],
+      "repository": "https://github.com/nical/rust_debug",
+      "revision": "492600cac47f64bcadaf9ad037ed64c5fecc8e63"
     }
   ],
   "version": "codi-rust-upstream-notices/1"

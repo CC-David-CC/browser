@@ -248,3 +248,23 @@ font staging instructions and SHA-256 pins, not generated font binaries.
 The Browser relay-recovery UI integration source is published and indexed at
 `https://ksu.codes/browser-sources/codi-browser-source-808fac040.tar.zst`,
 SHA-256 `8a5d4ee98efd14272379a54665dce2c3a21fd92aff4871281ab2ff674b4a4249`.
+
+For `svg_fmt 0.4.1`, the checksum-verified crate's recorded VCS revision
+`95612bf320385cb460571939d46594e5651e88fb` still cannot be retrieved from its
+named upstream repository. A separate comparison found that all three Rust
+source files and the README in the Firefox-vendored crate are byte-identical
+to reachable upstream commit `492600cac47f64bcadaf9ad037ed64c5fecc8e63`; its
+original Cargo manifest is also identical except for the `0.4.0` versus
+`0.4.1` version string. Both manifests identify the same author, repository,
+and MIT/Apache-2.0 license. The older upstream tree's MIT LICENSE identifies
+Nicolas Silva and has SHA-256
+`7e98bed7f100747aaae7d82ab94fbe6b76fd6b84b09a3aaa413bff8196d0fbb1`.
+Its text is now included in the public combined notices, explicitly labeled
+as a source-matched historical tree; this does not claim the missing package
+revision was recovered or establish the final linker retained the crate.
+`tools/audit_svg_fmt.py /path/to/pinned/firefox` reproduces the content, lock
+and license comparison. The upstream-notice input now hashes to
+`9cd8a4dddcf8e6617435d59de8051734425dc8af5cea1fde6be914404b73db92`;
+the public combined notice hashes to
+`c2717cef7dd3d8485cd4ddfa39101b4ae893353cd63240d0078085b47bc9b05c`.
+Other previously stated final-link and attribution limitations still apply.
