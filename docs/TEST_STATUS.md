@@ -13,6 +13,14 @@ The reason for that external restriction is not established. These observations
 do not guarantee compatibility with other sites or future changes to these
 sites. The engine's complete linked-component licensing review remains open.
 
+The status “Navigation requested” means Gecko accepted the navigation command;
+it does not confirm the page has finished loading or that the destination
+accepted the request. The current native status interface reports the current
+URL and back/forward availability, not a load-completion event. A reliable
+completion or HTTP-error indication needs an engine-side progress signal and a
+newly qualified engine build. For now, inspect the page itself and any separate
+network-policy message rather than interpreting that status as a success check.
+
 ## Historical source handoff 0.1.0
 
 The following report describes the earlier source-only handoff and is retained
