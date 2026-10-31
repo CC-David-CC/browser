@@ -368,3 +368,11 @@ The live relay rule-timing update is included in
 `codi-browser-source-933db11ea.tar.zst`, SHA-256
 `86a7231825d85de9199d5117ffe12d4f18f941161f75ad7351f4df00d0169836`.
 
+
+The unshipped ABI v2 Stop candidate's corresponding source package is
+`codi-browser-source-bf25cf384-v2.tar.zst`, SHA-256
+`736e7a6694e50ab66d8fe77da9a666685a6753b7613a5b9cbac4e72ff90ca171`.
+It includes the application source and an `engine-build/` directory containing
+the native wrapper patch, added native file, and actual candidate link driver.
+It supplements the pinned Firefox-WASM, Firefox and Emscripten base archives;
+it does not replace them. The candidate has not yet been deployed.
