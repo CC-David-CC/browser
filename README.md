@@ -131,9 +131,9 @@ The operator's independent server ledger is controlled by
 `serverAuditEnabled` in `relay/policy.json` and is **false by default**. The
 ledger code can sign a hash chain of authenticated connection metadata and
 produce per-account or all-account domain summaries from the same events. It
-has not been installed or connected to the relay. An operator must provision a
-separately protected Ed25519 signing key and save signed checkpoints outside
-the database to detect deletion or rewriting of the tail. The signed times
+is live but disabled; an operator can explicitly enable it as described in
+`docs/LIVE_POLICY.md`. Save checkpoints outside the database to detect deletion
+or rewriting of the tail. The signed times
 are the server's clock, not independently certified timestamps. No page
 content or message body belongs in these records.
 
@@ -151,7 +151,7 @@ requests in the test browser. That earlier fixture supplied a fake test identity
 later isolated desktop test used the real local issuer and rendered a public
 HTTPS page through the authenticated relay. The backend endpoint is now public
 and requires a registered, signed session for networking. These checks are not a broad website compatibility or security
-audit. Optional server audit remains disconnected and disabled.
+audit. Optional server audit remains disabled unless the operator enables it.
 
 IP-range and country controls are independent of the domain lists. Their
 source template and rollout notes are in `active-system/network_policy/README.md`.
