@@ -1,6 +1,6 @@
 # Browser engine source provision, 2026-10-30
 
-Current access: sign in, open Browser, and select **Licenses & source**.
+Current access (candidate): sign in, open the account menu, and select **Browser licenses & source**. This opens the existing registered Browser relay source page without starting the experimental Browser. The account tab must remain open while accessing source files.
 Direct `/browser-sources/` URLs in older notes below are historical and require
 the signed-in source route instead.
 
