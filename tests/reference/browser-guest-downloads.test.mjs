@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {GuestDownloads,MAX_DOWNLOAD_BYTES} from '../apps/system/browser/src/guest-downloads.mjs';
+import {GuestDownloads,MAX_DOWNLOAD_BYTES} from "../../src/guest-downloads.mjs";
 const marker=n=>`{00000000-0000-4000-8000-${String(n).padStart(12,'0')}}.json`;
 class MemoryFS {
  constructor(){this.files=new Map()}

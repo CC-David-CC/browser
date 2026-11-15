@@ -2,8 +2,8 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
-import {DOWNLOAD_RESOURCES} from '../apps/system/browser/src/download-resources.mjs';
-const root=new URL('../apps/system/browser/',import.meta.url),hash=b=>createHash('sha256').update(b).digest('hex');
+import {DOWNLOAD_RESOURCES} from "../../src/download-resources.mjs";
+const root=new URL("../../",import.meta.url),hash=b=>createHash('sha256').update(b).digest('hex');
 test('download modules are pinned, declared assets from the exact Gecko revision',async()=>{
  const source=JSON.parse(await readFile(new URL('engine-support/SOURCES.json',root))),app=JSON.parse(await readFile(new URL('app.json',root))),lock=JSON.parse(await readFile(new URL('upstream.lock.json',root)));
  assert.equal(source.geckoCommit,lock.gecko_commit);assert.equal(DOWNLOAD_RESOURCES.length,12);assert.deepEqual(Object.keys(source.files).sort(),DOWNLOAD_RESOURCES.map(x=>x.name).sort());
