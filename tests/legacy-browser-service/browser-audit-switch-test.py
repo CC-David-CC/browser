@@ -6,7 +6,7 @@ import sys
 import tempfile
 import unittest
 
-ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'active-system'))
+ROOT=Path(__file__).resolve().parents[2];sys.path[:0]=[str(ROOT/'server'),str(ROOT),str(ROOT/'tests')]
 from browser_service import audit_switch
 
 class AuditSwitchTest(unittest.TestCase):

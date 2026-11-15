@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "webos-browser"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["webos-accounts==0.1.0", "aiohttp==3.14.5", "cryptography==46.0.7"]
+
+[tool.setuptools]
+packages = ["browser_service", "relay"]
+
+[tool.setuptools.package-dir]
+browser_service = "server/browser_service"
+relay = "relay"
+
+[tool.setuptools.package-data]
+relay = ["policy.json"]

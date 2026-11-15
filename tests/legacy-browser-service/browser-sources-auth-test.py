@@ -10,8 +10,8 @@ from types import SimpleNamespace
 from aiohttp import web
 from aiohttp.test_utils import TestClient, TestServer
 
-ROOT=Path(__file__).resolve().parents[1]
-sys.path[:0]=[str(ROOT/'active-system'),str(ROOT/'active-system/codiserver-server-v0.3.0')]
+ROOT=Path(__file__).resolve().parents[2]
+sys.path[:0]=[str(ROOT/'server'),str(ROOT),str(ROOT/'tests')]
 from browser_service.http import BrowserHTTP
 from browser_service.authorization import NetworkDenied
 

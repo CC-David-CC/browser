@@ -11,8 +11,8 @@ from types import SimpleNamespace
 from aiohttp import ClientSession,web
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-ROOT=Path(__file__).resolve().parents[1]
-sys.path[:0]=[str(ROOT/'active-system'),str(ROOT/'apps/system/browser')]
+ROOT=Path(__file__).resolve().parents[2]
+sys.path[:0]=[str(ROOT/'server'),str(ROOT),str(ROOT/'tests')]
 from browser_service.http import BrowserHTTP
 from relay.audit import AuditLedger
 from relay.download import Downloader

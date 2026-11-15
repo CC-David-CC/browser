@@ -8,8 +8,8 @@ import unittest
 from aiohttp import web
 from aiohttp.test_utils import TestClient,TestServer
 
-ROOT=Path(__file__).resolve().parents[1]
-sys.path[:0]=[str(ROOT/'active-system'),str(ROOT/'apps/system/browser'),str(ROOT/'apps/system/browser/tests')]
+ROOT=Path(__file__).resolve().parents[2]
+sys.path[:0]=[str(ROOT/'server'),str(ROOT),str(ROOT/'tests')]
 from browser_service.http import BrowserHTTP
 from browser_service.authorization import NetworkDenied
 from relay.report_requests import ReportRequests
