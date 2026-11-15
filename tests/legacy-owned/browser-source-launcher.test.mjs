@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {startBrowserSourcePage} from '../active-system/assets/desktop/browser-source-launcher.mjs';
+import {startBrowserSourcePage} from '../../legacy/backend/assets/desktop/browser-source-launcher.mjs';
 const origin='https://ksu.codes',url=origin+'/browser-relay/connection/'+'A'.repeat(43)+'/sources/';
 function stub(){const result={closed:false,destination:null,location:{replace(v){result.destination=v}},close(){result.closed=true}};return result;}
 let closes=0, notices=[], stopped=0, popup=stub();
